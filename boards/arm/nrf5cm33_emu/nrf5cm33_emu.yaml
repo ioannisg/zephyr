@@ -1,0 +1,7 @@
+identifier: nrf5cm33_emu
+name: nRF5CM33-EMU
+type: mcu
+arch: arm
+toolchain:
+  - zephyr
+  - gccarmemb

@@ -1,0 +1,23 @@
+# Kconfig.series - Nordic Semiconductor nRF5 MCU line
+#
+# Copyright (c) 2016 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+config  SOC_SERIES_NRF5CM33X
+	bool "Nordic Semiconductor nRF5CM33 series MCU: experimental Cortex-M33 emulator"
+	select CPU_CORTEX_M
+	select CPU_CORTEX_M33
+	select CPU_HAS_MPU
+	select SOC_FAMILY_NRF5
+	select NRF_RTC_TIMER
+	select CLOCK_CONTROL
+	select CLOCK_CONTROL_NRF5
+	select SYS_POWER_LOW_POWER_STATE_SUPPORTED
+	select SYS_POWER_DEEP_SLEEP_SUPPORTED
+	select XIP
+	select HAS_CMSIS
+	select HAS_NRFX
+	help
+	 Enable support for NRF5CM33 MCU series

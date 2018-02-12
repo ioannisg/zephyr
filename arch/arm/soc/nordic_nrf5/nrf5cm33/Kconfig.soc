@@ -1,0 +1,20 @@
+# Kconfig.soc - Nordic Semiconductor nRF5CM33 MCU line
+#
+# Copyright (c) 2016 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+config SOC_NRF5CM33
+	depends on SOC_SERIES_NRF5CM33X
+	bool
+
+choice
+prompt "nRF5CM33x MCU Selection"
+depends on SOC_SERIES_NRF5CM33X
+
+config SOC_NRF5CM33_QFAA
+	bool "NRF5CM33_QFAA"
+	select SOC_NRF5CM33
+
+endchoice

@@ -1,0 +1,20 @@
+# Kconfig.defconfig.nrf52832 - Nordic Semiconductor nRF5cm33 MCU
+#
+# Copyright (c) 2016 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+
+if SOC_NRF5CM33_QFAA
+
+config SOC
+	string
+	default nRF5CM33_QFAA
+
+config NUM_IRQS
+	int
+	default 39
+
+endif # SOC_NRF5CM33_QFAA
+
