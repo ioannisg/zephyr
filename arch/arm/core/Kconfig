@@ -42,6 +42,19 @@ config ARM_STACK_PROTECTION
 	  This option enables MPU stack guard to cause a system fatal error
 	  if the bounds of the current process stack are overflowed.
 
+config ARM_SECURE_FIRMWARE
+	bool
+	default n
+	help
+	  This option indicates that we are building a Secure firmware for
+	  an ARMv8-M-based MCU that implements the Security Extension.
+
+	  A Secure firmware shall run in Secure state.
+
+	  A Secure firmware has access to both the Secure and Non-Secure
+	  resources of the Cortex-M MCU. It may generate Secure Faults if
+	  Secure MCU resources are accesed from the Non-Secure state.
+
 menu "Architectue Floating Point Options"
 depends on CPU_HAS_FPU
 
