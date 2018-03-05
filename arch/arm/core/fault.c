@@ -37,6 +37,15 @@
 	} while ((0))
 #endif
 
+#if defined(CONFIG_ARM_SECURE_FIRMWARE)
+/* Integrity signature for an ARMv8-M implementation */
+#define INTEGRITY_SIGNATURE 0xFEFA125BUL
+/* Size (in words) of the additional state context that is pushed
+ * to the Secure stack during a Non-Secure exception entry.
+ */
+#define ADDITIONAL_STATE_CONTEXT_WORDS 10
+#endif /* CONFIG_ARM_SECURE_FIRMWARE */
+
 #if (CONFIG_FAULT_DUMP == 1)
 /**
  *
@@ -312,19 +321,6 @@ static void _SecureFault(const NANO_ESF *esf)
 		PR_EXC("  Lazy state error\n");
 	}
 
-	/* SecureFault is never banked between security states. Therefore,
-	 * we may wish to, additionally, inspect the state of the Non-Secure
-	 * execution (program counter), to gain more information regarding
-	 * the root cause of the fault.
-	 */
-	NANO_ESF *esf_ns;
-	if (SCB_NS->ICSR & SCB_ICSR_RETTOBASE_Msk) {
-		esf_ns = (NANO_ESF *)__TZ_get_PSP_NS();
-	} else {
-		esf_ns = (NANO_ESF *)__TZ_get_MSP_NS();
-	}
-	PR_EXC("  NS instruction address:  0x%x\n", esf_ns->pc);
-
 	/* clear SFSR sticky bits */
 	SAU->SFSR |= 0xFF;
 }
@@ -473,11 +469,56 @@ static void _FaultDump(const NANO_ESF *esf, int fault)
  * @param esf ESF on the stack, either MSP or PSP depending at what processor
  *            state the exception was taken.
  */
+#if defined(CONFIG_ARM_SECURE_FIRMWARE)
+void _Fault(const NANO_ESF *esf, u32_t exc_return)
+#else
 void _Fault(const NANO_ESF *esf)
+#endif /* CONFIG_ARM_SECURE_FIRMWARE*/
 {
 	int fault = SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk;
 
+#if defined(CONFIG_ARM_SECURE_FIRMWARE)
+	if (exc_return & (1 << 6)) {
+		/* Exception occurred in Secure stack. */
+		FAULT_DUMP(esf, fault);
+	} else {
+		/* Exception occurred in Non-Secure stack during, either
+		 * a Non-Secure exception, or a Non-Secure function call.
+		 */
+		NANO_ESF *esf_ns;
+		if (SCB_NS->ICSR & SCB_ICSR_RETTOBASE_Msk) {
+			esf_ns = (NANO_ESF *)__TZ_get_PSP_NS();
+		} else {
+			esf_ns = (NANO_ESF *)__TZ_get_MSP_NS();
+		}
+		FAULT_DUMP(esf_ns, fault);
+
+		/* Dumping the Secure Stack, too.
+		 *
+		 * In case of a Non-Secure exception the top of the stack
+		 * contains the integrity signature.
+		 *
+		 * In case of a Non-Secure function call the top of the
+		 * stack contains the  return address to Secure state.
+		 */
+		u32_t *top_of_stack = (u32_t *)esf;
+		if (*top_of_stack == INTEGRITY_SIGNATURE) {
+			/* Exception during Non-Secure exception.
+			 * The return address after the additional state
+			 * context, stacked by the Secure code upon
+			 * Non-Secure exception entry.
+			 */
+			top_of_stack -= ADDITIONAL_STATE_CONTEXT_WORDS;
+		} else {
+			/* Exception during Non-Secure function call.
+			 * The return address is located on top of stack.
+			 */
+		}
+		PR_EXC("  S instruction address:  0x%x\n", *top_of_stack);
+	}
+#else
 	FAULT_DUMP(esf, fault);
+#endif /* CONFIG_ARM_SECURE_FIRMWARE*/
 
 	_SysFatalErrorHandler(_NANO_ERR_HW_EXCEPTION, esf);
 }

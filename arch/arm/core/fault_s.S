@@ -113,6 +113,16 @@ _stack_frame_endif:
 #error Unknown ARM architecture
 #endif /* CONFIG_ARMV6_M_ARMV8_M_BASELINE */
 
+#if defined(CONFIG_ARM_SECURE_FIRMWARE)
+	/* In an ARM Secure firmware, the stack pointer that is retrieved
+	 * above points to the Secure stack. However, the exeption may
+	 * have occured in Non-Secure state.
+	 * To determine this we need to inspect the EXC_RETURN value
+	 * located in the LR. Therefore, we supply the LR value as an
+	 * argument to the fault handler.
+	 */
+	mov r1, lr
+#endif /* CONFIG_ARM_SECURE_FIRMWARE */
 	push {lr}
 	bl _Fault
 
