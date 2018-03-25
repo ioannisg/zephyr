@@ -66,6 +66,27 @@ typedef struct tz_nonsecure_setup_conf {
  */
 void tz_nonsecure_state_setup(const tz_nonsecure_setup_conf_t *p_ns_conf);
 
+#if defined(CONFIG_ARMV8_M_MAINLINE)
+
+/**
+ *
+ * @brief Setup Non-Secure Stack Pointer limit register
+ *
+ * Configure the Non-Secure instance of the MSPLIM or PSPLIM register.
+ *
+ * @param is_msp MSPLIM_NS or PSPLIM_NS flag:
+ *               1 if MSPLIM_NS is to be set, 0 if PSPLIM_NS is to be set.
+ *
+ * Notes:
+ *
+ * This function shall only be called from Secure state.
+ *
+ * @return N/A
+ */
+void tz_nonsecure_splim_set(u32_t is_msp, u32_t lim);
+
+#endif /* CONFIG_ARMV8_M_MAINLINE */
+
 /**
  *
  * @brief Configure SAU
