@@ -60,6 +60,19 @@ void tz_nonsecure_state_setup(const tz_nonsecure_setup_conf_t *p_ns_conf)
 		p_ns_conf->control_ns.npriv);
 }
 
+void tz_nbanked_exception_target_state_set(int secure_state)
+{
+	u32_t aircr_payload = SCB->AIRCR & (~(SCB_AIRCR_VECTKEY_Msk));
+	if (secure_state) {
+		aircr_payload &= ~(SCB_AIRCR_BFHFNMINS_Msk);
+	} else {
+		aircr_payload |= SCB_AIRCR_BFHFNMINS_Msk;
+	}
+	SCB->AIRCR = ((0x5FAUL << SCB_AIRCR_VECTKEY_Pos)
+			& SCB_AIRCR_VECTKEY_Msk)
+		| aircr_payload;
+}
+
 void tz_sau_configure(int enable, int allns)
 {
 	if (enable) {
