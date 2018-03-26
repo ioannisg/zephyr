@@ -87,6 +87,22 @@ void tz_nonsecure_splim_set(u32_t is_msp, u32_t lim);
 
 #endif /* CONFIG_ARMV8_M_MAINLINE */
 
+/**
+ * @brief Prioritize Secure exceptions
+ *
+ * Function allows the user to prioritize Secure exceptions over Non-Secure,
+ * enabling Secure exception priority boosting.
+ *
+ * @param secure_boost Flag indicating whether Secure priority boosting
+ *                 is desired; select 1 for priority boosting, otherwise 0.
+ *
+ * Note:
+ *
+ * This function shall only be called from Secure state.
+ *
+ * @return N/A
+ */
+void tz_nonsecure_exception_prio_config(int secure_boost);
 
 /**
  * @brief Set target state for exceptions not banked between security states
