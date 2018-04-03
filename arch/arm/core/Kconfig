@@ -75,6 +75,28 @@ config ARM_SECURE_FIRMWARE
 	  Secure Faults may only be handled by code executing in Secure
 	  state.
 
+menu "ARM Secure Firmware Options"
+depends on ARM_SECURE_FIRMWARE
+
+config ARM_FIRMWARE_HAS_SECURE_ENTRY_FUNCS
+	bool "Secure Firmware has Secure Entry functions"
+	depends on ARM_SECURE_FIRMWARE
+	default n
+	help
+	  Option indicates that ARM Secure Firmware contains
+	  Secure Entry functions that may be called from
+	  Non-Secure state. Secure Entry functions must be
+	  located in Non-Secure Callable memory regions.
+
+config ARM_NSC_REGION_BASE_ADDRESS
+	hex "ARM Non-Secure Callable Region base address"
+	depends on ARM_FIRMWARE_HAS_SECURE_ENTRY_FUNCS
+	default 0
+	help
+	  Start address of Non-Secure Callable section
+
+endmenu
+
 menu "Architectue Floating Point Options"
 depends on CPU_HAS_FPU
 

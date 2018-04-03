@@ -198,6 +198,7 @@ typedef void __attribute__((cmse_nonsecure_call)) (*tz_ns_func_ptr_t) (void);
 /* Required for C99 compilation */
 #define typeof  __typeof__
 
+#if defined(CONFIG_ARM_FIRMWARE_HAS_SECURE_ENTRY_FUNCS)
 /**
  * @brief Non-Secure entry function attribute.
  *
@@ -210,6 +211,8 @@ typedef void __attribute__((cmse_nonsecure_call)) (*tz_ns_func_ptr_t) (void);
  */
 #define __TZ_NONSECURE_ENTRY_FUNC \
 	__attribute__((cmse_nonsecure_entry, noinline))
+
+#endif /* CONFIG_ARM_FIRMWARE_HAS_SECURE_ENTRY_FUNCS */
 
 /**
  * @brief Declare a pointer of non-secure function type
