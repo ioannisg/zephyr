@@ -95,6 +95,16 @@ config ARM_NSC_REGION_BASE_ADDRESS
 	help
 	  Start address of Non-Secure Callable section
 
+config ARM_ENTRY_VENEERS_LIB_NAME
+	string "Entry Veneers symbol file"
+	depends on ARM_FIRMWARE_HAS_SECURE_ENTRY_FUNCS
+	default "libentryveneers.a"
+	help
+	  Library file to store the symbol table for
+	  the entry veneers. The library may be used
+	  for building a Non-Secure firmware with
+	  access to Secure Entry functions.
+
 endmenu
 
 menu "Architectue Floating Point Options"
