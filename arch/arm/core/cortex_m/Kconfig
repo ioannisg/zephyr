@@ -328,6 +328,20 @@ config PLATFORM_SPECIFIC_INIT
 	  The platform specific initialization code (_PlatformInit) is executed
 	  at the beginning of the startup code (__start).
 
+config CORTEX_M_MSP_INIT
+	bool
+	prompt "Explicit initialization of MSP register"
+	default n
+	help
+	  Select this option to explicitly initialize the
+	  Main Stack Pointer during early boot with the
+	  value specified in the start of the vector table.
+
+	  Note that this is not needed when early boot is
+	  executed after cold/warm reset. It may be applicable
+	  when the image is built for chain-loading by a
+	  bootloader.
+
 endmenu
 
 endif # CPU_CORTEX_M

@@ -74,6 +74,13 @@ SECTION_SUBSEC_FUNC(TEXT,_reset_section,__start)
 #error Unknown ARM architecture
 #endif /* CONFIG_ARMV6_M_ARMV8_M_BASELINE */
 
+#if defined(CONFIG_CORTEX_M_MSP_INIT)
+	ldr r0, =_vector_start
+	ldr r0, [r0]
+	msr MSP, r0
+	isb
+#endif /* CONFIG_CORTEX_M_MSP_INIT */
+
 #ifdef CONFIG_WDOG_INIT
     /* board-specific watchdog initialization is necessary */
     bl _WdogInit
