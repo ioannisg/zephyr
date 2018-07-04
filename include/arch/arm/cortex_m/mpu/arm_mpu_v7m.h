@@ -119,20 +119,4 @@
 		P_RW_U_NA_Msk)
 #define REGION_IO_ATTR(size) (DEVICE_NON_SHAREABLE | size | P_RW_U_NA_Msk)
 
-
-/* Region definition data structure */
-struct arm_mpu_region {
-	/* Region Base Address */
-	u32_t base;
-	/* Region Name */
-	const char *name;
-	/* Region Attributes */
-	u32_t attr;
-};
-
-#define MPU_REGION_ENTRY(_name, _base, _attr) \
-	{\
-		.name = _name, \
-		.base = _base, \
-		.attr = _attr, \
-	}
+typedef u32_t arm_mpu_region_attr_t;
