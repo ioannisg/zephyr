@@ -29,6 +29,10 @@ extern "C" {
 #ifndef _ASMLANGUAGE
 extern void _FaultInit(void);
 extern void _CpuIdleInit(void);
+#ifdef CONFIG_ARM_MPU
+extern void _arch_configure_static_mpu_regions(void);
+#endif
+
 static ALWAYS_INLINE void kernel_arch_init(void)
 {
 	_InterruptStackSetup();
@@ -42,6 +46,16 @@ _arch_switch_to_main_thread(struct k_thread *main_thread,
 			    k_thread_stack_t *main_stack,
 			    size_t main_stack_size, k_thread_entry_t _main)
 {
+#ifdef CONFIG_ARM_MPU
+	/* Configure static memory map. This will program MPU regions,
+	 * to set up access permissions for fixed memory sections, such
+	 * as Application Memory or No-Cacheable SRAM area.
+	 *
+	 * This function is invoked once, upon system initialization.
+	 */
+	_arch_configure_static_mpu_regions();
+#endif
+
 	/* get high address of the stack, i.e. its start (stack grows down) */
 	char *start_of_main_stack;
 
@@ -90,14 +104,14 @@ _arch_switch_to_main_thread(struct k_thread *main_thread,
 #error Unknown ARM architecture
 #endif /* CONFIG_ARMV6_M_ARMV8_M_BASELINE */
 
-#ifdef CONFIG_MPU_STACK_GUARD
+#ifdef CONFIG_ARM_MPU
 		/*
-		 * if guard is enabled, make sure to set it before jumping to thread
-		 * entry function
-		*/
+		 * If stack protection is enabled, make sure to set it
+		 * before jumping to thread entry function
+		 */
 		"mov %%r0, %3 \t\n"
 		"push {r2, lr} \t\n"
-		"blx configure_mpu_stack_guard \t\n"
+		"blx _arch_configure_dynamic_mpu_regions \t\n"
 		"pop {r2, lr} \t\n"
 #endif
 		/* branch to _thread_entry(_main, 0, 0, 0) */
