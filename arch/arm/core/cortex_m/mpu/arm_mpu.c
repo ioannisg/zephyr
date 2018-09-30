@@ -333,8 +333,13 @@ void arm_core_mpu_configure_user_context(struct k_thread *thread)
 	u32_t size = thread->stack_info.size;
 
 	if (!thread->arch.priv_stack_start) {
+#if !defined(CONFIG_MPU_REQUIRES_NON_OVERLAPPING_REGIONS)
+		/* Kernel SRAM access permissions are reset in context-switch,
+		 * so this region is already disabled.
+		 */
 		_disable_region(_get_region_index_by_type(
 			THREAD_STACK_REGION));
+#endif
 		return;
 	}
 	arm_core_mpu_configure(THREAD_STACK_REGION, base, size);
