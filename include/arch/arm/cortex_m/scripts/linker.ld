@@ -68,6 +68,16 @@
 	#define RAM_ADDR CONFIG_SRAM_BASE_ADDRESS
 #endif
 
+/* Set alignment to CONFIG_ARM_MPU_REGION_MIN_ALIGN_AND_SIZE
+ * to make linker section alignment comply with MPU granularity.
+ */
+#if defined(CONFIG_ARM_MPU_REGION_MIN_ALIGN_AND_SIZE) \
+	&& (CONFIG_ARM_MPU_REGION_MIN_ALIGN_AND_SIZE != 0)
+_region_min_align = CONFIG_ARM_MPU_REGION_MIN_ALIGN_AND_SIZE;
+#else
+_region_min_align = 4;
+#endif
+
 MEMORY
     {
     FLASH                 (rx) : ORIGIN = ROM_ADDR, LENGTH = ROM_SIZE
@@ -283,34 +293,14 @@ SECTIONS
 	}
 #endif
 
-#include <app_data_alignment.ld>
-
-#if defined(CONFIG_APP_SHARED_MEM)
-#if defined(CONFIG_MPU_REQUIRES_POWER_OF_TWO_ALIGNMENT)
-#define APP_SHARED_ALIGN . = ALIGN(4);
-		#include <app_smem.ld>
-#else
-	SECTION_PROLOGUE(_APP_SMEM_SECTION_NAME, (OPTIONAL),)
-	{
-		. = ALIGN(4);
-		_image_ram_start = .;
-		_app_smem_start = .;
-		APP_SMEM_SECTION()
-		/* 32-byte align end of app shared area to make MPU friendly */
-		. = ALIGN(_app_data_align);
-		_app_smem_end = .;
-
-	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
-#endif  /* CONFIG_MPU_REQUIRES_POWER_OF_TWO_ALIGNMENT */
-
-	_app_smem_size = _app_smem_end - _app_smem_start;
-	_app_smem_rom_start = LOADADDR(_APP_SMEM_SECTION_NAME);
-#endif  /* CONFIG_APP_SHARED_MEM */
-
 #ifdef CONFIG_APPLICATION_MEMORY
 	SECTION_DATA_PROLOGUE(_APP_DATA_SECTION_NAME, (OPTIONAL),)
 	{
 
+#ifdef CONFIG_MPU_REQUIRES_POWER_OF_TWO_ALIGNMENT
+		. = ALIGN( 1 << LOG2CEIL(__app_ram_size));
+#endif
+		. = ALIGN(_region_min_align);
 		__app_ram_start = .;
 		__app_data_ram_start = .;
 		APP_INPUT_SECTION(.data)
@@ -339,14 +329,41 @@ SECTIONS
 
 	__app_last_address_used = .;
 
-	/* Pad out application ram area to make MPU friendly */
-	SECTION_PROLOGUE(app_pad, (NOLOAD OPTIONAL),)
-	{
-		. = ALIGN(_app_data_align);
-	} GROUP_DATA_LINK_IN(RAMABLE_REGION, RAMABLE_REGION)
+	/* Align the end of the application memory
+	 * with MPU alignment requirement.
+	 */
+#ifdef CONFIG_MPU_REQUIRES_POWER_OF_TWO_ALIGNMENT
+	. = ALIGN( 1 << LOG2CEIL(__app_ram_size));
+#endif
+	. = ALIGN(_region_min_align);
 	__app_ram_end = .;
 	__app_ram_size = __app_ram_end - __app_ram_start;
 #endif /* CONFIG_APPLICATION_MEMORY */
+
+#if defined(CONFIG_APP_SHARED_MEM)
+#if defined(CONFIG_MPU_REQUIRES_POWER_OF_TWO_ALIGNMENT)
+#define APP_SHARED_ALIGN . = ALIGN(_region_min_align);
+		#include <app_smem.ld>
+#else
+	SECTION_PROLOGUE(_APP_SMEM_SECTION_NAME, (OPTIONAL),)
+	{
+		. = ALIGN(_region_min_align);
+		_image_ram_start = .;
+		_app_smem_start = .;
+		APP_SMEM_SECTION()
+		/* Align the end of shared app mem sectionwith the
+		 * minimum granularity required by MPU.
+		 */
+		. = ALIGN(_region_min_align);
+		_app_smem_end = .;
+
+	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
+#endif  /* CONFIG_MPU_REQUIRES_POWER_OF_TWO_ALIGNMENT */
+
+	_app_smem_size = _app_smem_end - _app_smem_start;
+	_app_smem_rom_start = LOADADDR(_APP_SMEM_SECTION_NAME);
+#endif  /* CONFIG_APP_SHARED_MEM */
+
 
     SECTION_DATA_PROLOGUE(_BSS_SECTION_NAME,(NOLOAD),)
 	{

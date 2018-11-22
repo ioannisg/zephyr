@@ -12,10 +12,11 @@ from elftools.elf.elffile import ELFFile
 # when APP_SHARED_MEM is enabled.
 print_template = """
 		/* Auto generated code do not modify */
+		APP_SHARED_ALIGN;
 		. = ALIGN( 1 << LOG2CEIL(data_smem_{0}b_end - data_smem_{0}));
 		data_smem_{0} = .;
 		KEEP(*(SORT(data_smem_{0}*)))
-		. = ALIGN(_app_data_align);
+		APP_SHARED_ALIGN;
 		. = ALIGN( 1 << LOG2CEIL(data_smem_{0}b_end - data_smem_{0}));
 		data_smem_{0}b_end = .;
 """
