@@ -12,6 +12,8 @@
 #define LOG_LEVEL CONFIG_MPU_LOG_LEVEL
 #include <logging/log.h>
 
+#include <arm_mpu_common_internal.h>
+
 /* Global MPU configuration at system initialization. */
 static void _mpu_init(void)
 {
@@ -59,6 +61,135 @@ static void _region_init(u32_t index, const struct arm_mpu_region *region_conf)
 			index, region_conf->base, region_conf->attr.rbar,
 			region_conf->attr.mair_idx, region_conf->attr.r_limit);
 }
+
+/**
+ * This internal function is utilized by the MPU driver to combine a given
+ * MPU RAM attribute configuration and region size and fill-in a structure with
+ * the correct parameter set.
+ */
+static inline void _get_ram_region_attr_by_conf(arm_mpu_region_attr_t *p_attr,
+	u32_t ap_attr, u32_t base, u32_t size)
+{
+	p_attr->rbar = ap_attr  & (MPU_RBAR_XN_Msk | MPU_RBAR_AP_Msk);
+	p_attr->mair_idx = MPU_MAIR_INDEX_SRAM;
+	p_attr->r_limit = REGION_LIMIT_ADDR(base, size);
+}
+
+/* This internal function programs an MPU region
+ * of a given configuration at a given MPU index.
+ */
+static inline void _mpu_configure_region(u8_t index,
+	struct k_mem_partition new_region)
+{
+	struct arm_mpu_region region_conf;
+
+	/* Populate internal ARM MPU region configuration structure. */
+	region_conf.base = new_region.start;
+	_get_ram_region_attr_by_conf(&region_conf.attr,
+			new_region.attr, new_region.start, new_region.size);
+	/* Program region */
+	_region_init(index, &region_conf);
+}
+
+static void _mpu_configure_static_mpu_regions(const struct k_mem_partition
+	static_regions[], u8_t regions_num,
+	u32_t background_area_base,
+	u32_t background_area_end)
+{
+	/* In ARMv8-M architecture the static regions are programmed on SRAM,
+	 * forming a full partition of the background area, specified by the
+	 * given boundaries.
+	 */
+	int i;
+
+	/* Set the previous region end to the beginning of
+	 * the background area.
+	 */
+	u32_t _prev_end = background_area_base;
+
+	for (i = 0; i < regions_num; i++) {
+		if (static_regions[i].size == 0) {
+			continue;
+		}
+		/* Non-empty static region. */
+
+		if (static_regions[i].base > _prev_end) {
+			/* Configure the area before the start of
+			 * the first region.
+			 */
+
+			/* Attempt to allocate new region index. */
+			if (static_regions_num > (_get_num_regions() - 1)) {
+				/* No available MPU region index. */
+				__ASSERT(0,
+					"Failed to allocate MPU region %u\n",
+				static_regions_num);
+				return;
+			}
+
+			LOG_DBG("Configure bkgrnd static region at index 0x%x",
+				static_regions_num);
+
+			struct k_mem_partition part = {_prev_end, static_regions[i].base};
+
+			_mpu_configure_region(static_regions_num,
+				static_regions[i],
+				K_MEM_PARTITION_P_RW_U_NA);
+
+			/* Increment number of programmed MPU indices. */
+			static_regions_num++;
+		}
+		/* Attempt to allocate new region index. */
+		if (static_regions_num > (_get_num_regions() - 1)) {
+			/* No available MPU region index. */
+			__ASSERT(0, "Failed to allocate new MPU region %u\n",
+			static_regions_num);
+			return;
+		}
+
+		LOG_DBG("Configure new static region at index 0x%x",
+			static_regions_num);
+
+		_mpu_configure_region(static_regions_num, static_regions[i]);
+
+		/* Increment number of programmed MPU indices. */
+		static_regions_num++;
+
+		_prev_end = static_region[i].start + static_region[i].size;
+	}
+
+	/* If there is un-covered area after the end of the last
+	 * region and the end of the background area, we will
+	 * require one more region.
+	 */
+	if (_prev_end < background_area_end) {
+		/* Attempt to allocate new region index. */
+		if (static_regions_num > (_get_num_regions() - 1)) {
+			/* No available MPU region index. */
+			__ASSERT(0,
+				"Failed to allocate MPU region %u\n",
+			static_regions_num);
+			return;
+		}
+
+		LOG_DBG("Configure bkgrnd static region at index 0x%x",
+			static_regions_num);
+
+		struct k_mem_partition part = {_prev_end,
+			background_area_end - _prev_end,
+			K_MEM_PARTITION_P_RW_U_NA};
+
+		_mpu_configure_region(static_regions_num,
+			static_regions[i]);
+
+		/* Increment number of programmed MPU indices. */
+		static_regions_num++;
+
+	}
+}
+
+
+
 
 #if defined(CONFIG_USERSPACE) || defined(CONFIG_MPU_STACK_GUARD) || \
 	defined(CONFIG_APPLICATION_MEMORY)

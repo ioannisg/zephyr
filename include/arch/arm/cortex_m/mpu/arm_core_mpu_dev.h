@@ -71,6 +71,19 @@ void arm_core_mpu_enable(void);
 void arm_core_mpu_disable(void);
 
 /**
+ * @brief configure a set of fixed (static) MPU regions.
+ */
+void arm_core_mpu_configure_static_mpu_regions(
+	const struct k_mem_partition static_regions[], u8_t regions_num,
+	u32_t background_are_start, u32_t background_area_end);
+
+/**
+ * @brief configure a set of dynamic MPU regions.
+ */
+void arm_core_mpu_configure_dynamic_mpu_regions(
+	const struct k_mem_partition static_regions[], u8_t regions_num);
+
+/**
  * @brief configure the base address and size for an MPU region
  *
  * @param   type    MPU region type

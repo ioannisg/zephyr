@@ -12,6 +12,8 @@
 #define LOG_LEVEL CONFIG_MPU_LOG_LEVEL
 #include <logging/log.h>
 
+#include <arm_mpu_common_internal.h>
+
 /* Global MPU configuration at system initialization. */
 static void _mpu_init(void)
 {
@@ -34,12 +36,6 @@ static void _region_init(u32_t index, const struct arm_mpu_region *region_conf)
 	LOG_DBG("[%d] 0x%08x 0x%08x",
 		index, region_conf->base, region_conf->attr.rasr);
 }
-
-#if defined(CONFIG_USERSPACE) || defined(CONFIG_MPU_STACK_GUARD) || \
-	defined(CONFIG_APPLICATION_MEMORY) || defined(CONFIG_NOCACHE_MEMORY)
-
-static inline u8_t _get_num_regions(void);
-static inline u32_t _get_region_index_by_type(u32_t type);
 
 /**
  * This internal function converts the region size to
@@ -141,6 +137,97 @@ static inline void _get_ram_region_attr_by_conf(arm_mpu_region_attr_t *p_attr,
 
 	p_attr->rasr = attr.rasr_attr | _size_to_mpu_rasr_size(size);
 }
+
+/* This internal function programs an MPU region
+ * of a given configuration at a given MPU index.
+ */
+static inline void _mpu_configure_region(u8_t index,
+	struct k_mem_partition new_region)
+{
+	struct arm_mpu_region region_conf;
+
+	/* Populate internal ARM MPU region configuration structure. */
+	region_conf.base = new_region.start;
+	_get_ram_region_attr_by_conf(&region_conf.attr,
+		new_region.attr, new_region.start, new_region.size);
+
+	/* Program region */
+	_region_init(index, &region_conf);
+}
+
+static void _mpu_configure_static_mpu_regions(const struct k_mem_partition
+	static_regions[], u8_t regions_num,
+	u32_t background_area_base,
+	u32_t background_area_end)
+{
+	int i;
+
+	/* In ARMv7-M architecture the static regions are
+	 * programmed on top of SRAM region configuration.
+	 */
+	ARG_UNUSED(background_area_base);
+	ARG_UNUSED(background_area_end);
+
+	for (i = 0; i < regions_num; i++) {
+		if (static_regions[i].size == 0) {
+			continue;
+		}
+		/* Non-empty static region. */
+
+		/* Attempt to allocate new region index. */
+		if (static_regions_num > (_get_num_regions() - 1)) {
+			/* No available MPU region index. */
+			__ASSERT(0, "Failed to allocate new MPU region %u\n",
+			static_regions_num);
+			return;
+		}
+
+		LOG_DBG("Configure new static region at index 0x%x",
+			static_regions_num);
+
+		_mpu_configure_region(static_regions_num, static_regions[i]);
+
+		/* Increment number of programmed MPU indices. */
+		static_regions_num++;
+	}
+}
+
+static void _mpu_configure_dynamic_mpu_regions(const struct k_mem_partition
+		dynamic_regions[], u8_t regions_num)
+{
+	/* In ARMv7-M architecture the dynamic regions are
+	 * programmed on top of exiting SRAM region configuration.
+	 */
+	int i;
+	u8_t current_reg_index = static_regions_num;
+
+	for (i = 0; i < regions_num; i++) {
+		if (dynamic_regions[i].size == 0) {
+			continue;
+		}
+		/* Non-empty dynamic region. */
+
+		/* Attempt to allocate new region index. */
+		if (current_reg_index > (_get_num_regions() - 1)) {
+			/* No available MPU region index. */
+			__ASSERT(0, "Failed to allocate new MPU region %u\n",
+				current_reg_index);
+			return;
+		}
+
+		LOG_DBG("Configure new dynamic region at index 0x%x",
+			current_reg_index);
+
+		_mpu_configure_region(current_reg_index, dynamic_regions[i]);
+
+		/* Increment number of programmed MPU indices. */
+		current_reg_index++;
+	}
+}
+
+#if defined(CONFIG_USERSPACE) || defined(CONFIG_MPU_STACK_GUARD)
+
+static inline u32_t _get_region_index_by_type(u32_t type);
 
 /**
  * This internal function checks if region is enabled or not.
@@ -251,6 +338,10 @@ static inline int _mpu_buffer_validate(void *addr, size_t size, int write)
 	return -EPERM;
 
 }
+
+/*
+ * This internal macro returns the number of available domain partitions. */
+#define _MPU_MAX_DOMAIN_PARTITIONS_GET(num) (num)
 #endif /* CONFIG_USERSPACE */
 
 #endif /* USERSPACE || MPU_STACK_GUARD || APPLICATION_MEMORY
