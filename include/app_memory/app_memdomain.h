@@ -68,7 +68,7 @@ struct app_region {
 
 /*
  * Declares a partition and provides a function to add the
- * partition to the linke dlist and initialize the partition.
+ * partition to the linked list and initialize the partition.
  */
 #ifdef CONFIG_MPU_REQUIRES_POWER_OF_TWO_ALIGNMENT
 /* For power of 2 MPUs linker provides support to help us
@@ -96,7 +96,8 @@ struct app_region {
 		smem_size_assign(name);				\
 		sys_dlist_append(&app_mem_list, &name.lnode); \
 		mem_domain_##name.start = (u32_t) name.dmem_start; \
-		mem_domain_##name.attr = K_MEM_PARTITION_P_RW_U_RW; \
+		k_mem_partition_attr_t attr = K_MEM_PARTITION_P_RW_U_RW; \
+		mem_domain_##name.attr = attr; \
 		name.partition = &mem_domain_##name; \
 	}
 
