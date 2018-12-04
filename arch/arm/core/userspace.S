@@ -40,12 +40,12 @@ SECTION_FUNC(TEXT,_arm_userspace_enter)
     /* move user_entry to lr */
     mov lr, r0
 
-#if defined (CONFIG_MPU_STACK_GUARD)
-    /* Re-program MPU to guard the privileged stack. */
+#if defined (CONFIG_ARM_MPU)
+    /* Re-program dynamic memory map */
     push {r1,r2,r3,lr}
     ldr r0, =_kernel
     ldr r0, [r0, #_kernel_offset_to_current]
-    bl configure_mpu_stack_guard
+    bl _arch_configure_dynamic_mpu_regions
     pop {r1,r2,r3,lr}
 #endif
 
@@ -96,16 +96,6 @@ SECTION_FUNC(TEXT,_arm_userspace_enter)
     eors.n r1, r1
 #endif
     bl memset
-
-    /* setup arguments to configure_mpu_mem_domain */
-    ldr r0, =_kernel
-    ldr r0, [r0, #_kernel_offset_to_current]
-    bl configure_mpu_mem_domain
-
-    /* setup arguments to configure_mpu_user_context */
-    ldr r0, =_kernel
-    ldr r0, [r0, #_kernel_offset_to_current]
-    bl configure_mpu_user_context
 
     pop {r0,r1,r2,r3,ip,lr}
 
