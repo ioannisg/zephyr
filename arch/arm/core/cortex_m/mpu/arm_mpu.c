@@ -197,6 +197,17 @@ int arm_core_mpu_get_max_domain_partition_regions(void)
 
 	return _MPU_MAX_DOMAIN_PARTITIONS_GET(available_regions_num);
 }
+
+/**
+ * @brief validate the given buffer is user accessible or not
+ *
+ * Presumes the background mapping is NOT user accessible.
+ */
+int arm_core_mpu_buffer_validate(void *addr, size_t size, int write)
+{
+	return _mpu_buffer_validate(addr, size, write);
+}
+
 #endif /* CONFIG_USERSPACE */
 
 /**
