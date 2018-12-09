@@ -165,6 +165,38 @@ void arm_core_mpu_mem_partition_configure(struct k_mem_partition *partition,
 	partition->attr = *new_attr;
 	_mpu_configure_region(reg_index, partition);
 }
+
+/**
+ * @brief get the maximum number of free regions for memory domain partitions
+ */
+int arm_core_mpu_get_max_domain_partition_regions(void)
+{
+	int available_regions_num =	_get_num_regions() - static_regions_num;
+
+	/* Additional regions required for the thread stack,
+	 * depending on whether the MPU architecture requires
+	 * non overlapping regions.
+	 */
+#if defined(CONFIG_MPU_REQUIRES_NON_OVERLAPPING_REGIONS)
+	available_regions_num -= 2;
+#else
+	available_regions_num -= 1;
+#endif
+
+#if defined(CONFIG_MPU_STACK_GUARD)
+	/* Additional regions required for the current thread's privileged
+	 * stack guard, depending on whether the MPU architecture requires
+	 * non overlapping regions.
+	 */
+#if defined(CONFIG_MPU_REQUIRES_NON_OVERLAPPING_REGIONS)
+	available_regions_num -= 2;
+#else
+	available_regions_num -= 1;
+#endif
+#endif
+
+	return _MPU_MAX_DOMAIN_PARTITIONS_GET(available_regions_num);
+}
 #endif /* CONFIG_USERSPACE */
 
 /**

@@ -219,6 +219,25 @@ static inline int _is_enabled_region(u32_t index)
 	return (MPU->RLAR & MPU_RLAR_EN_Msk) ? 1 : 0;
 }
 
+/**
+ * @brief Maximum number of memory domain partitions
+ *
+ * This internal macro returns the maximum number of memory partitions, which
+ * may be defined in a memory domain, given the amount of available HW MPU
+ * regions.
+ *
+ * For ARMv8-M MPU architecture, where the domain partitions cannot be defined
+ * on top of the statically configured memory regions, the maximum number of
+ * memory domain partitions is set to half of the number of available MPU
+ * regions. This ensures that in the worst-case where there are gaps between
+ * the memory partitions of the domain, the desired memory map can still be
+ * programmed using the available number of HW MPU regions.
+ *
+ * @param mpu_regions_num the number of available HW MPU regions.
+ */
+#define _MPU_MAX_DOMAIN_PARTITIONS_GET(mpu_regions_num) (mpu_regions_num/2)
+
+
 #endif /* CONFIG_USERSPACE */
 
 static int _region_allocate_and_init(const u8_t index,
