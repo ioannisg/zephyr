@@ -185,6 +185,28 @@ static void _mpu_configure_static_mpu_regions(const struct k_mem_partition
 	static_regions_num = mpu_reg_index;
 }
 
+/* This internal function programs the dynamic MPU regions */
+static void _mpu_configure_dynamic_mpu_regions(const struct k_mem_partition
+		dynamic_regions[], u8_t regions_num)
+{
+	u32_t mpu_reg_index = static_regions_num;
+
+	/* In ARMv7-M architecture the dynamic regions are
+	 * programmed on top of existing SRAM region configuration.
+	 */
+
+	mpu_reg_index = _mpu_configure_regions(dynamic_regions,
+		regions_num, mpu_reg_index, false);
+
+	if (mpu_reg_index != -EINVAL) {
+
+		/* Disable the non-programmed MPU regions. */
+		for (int i = mpu_reg_index; i < _get_num_regions(); i++) {
+			ARM_MPU_ClrRegion(i);
+		}
+	}
+}
+
 /**
  * This internal function is utilized by the MPU driver to combine a given
  * MPU RAM attribute configuration and region size and return the correct
