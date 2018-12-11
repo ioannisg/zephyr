@@ -109,6 +109,10 @@ static int _mpu_partition_is_sane(const struct k_mem_partition *part)
  * buffer, specified by its start address and size, lies. If
  * a valid MPU region cannot be derived the function returns
  * -EINVAL.
+ *
+ * Note that, for the function to work properly, the ARM MPU
+ * needs to be enabled.
+ *
  */
 static inline int _get_region_index(u32_t start, u32_t size)
 {
@@ -390,6 +394,36 @@ static void _mpu_mark_areas_for_dynamic_regions(
 		_mpu_region_get_conf(dyn_reg_info[i].index,
 			&dyn_reg_info[i].region_conf);
 	}
+}
+
+/* This internal function programs the dynamic MPU regions */
+static void _mpu_configure_dynamic_mpu_regions(const struct k_mem_partition
+	dynamic_regions[], u8_t regions_num)
+{
+	u32_t mpu_reg_index = static_regions_num;
+
+	arm_core_mpu_disable();
+	/* Disable all MPU regions except for the static ones. */
+	for (int i = mpu_reg_index; i < _get_num_regions(); i++) {
+		ARM_MPU_ClrRegion(i);
+	}
+
+	/* Reset MPU regions inside which dynamic memory regions may
+	 * be programmed.
+	 */
+	for (int i = 0; i < MPU_DYNAMIC_REGION_AREAS_NUM; i++) {
+		_region_init(dyn_reg_info[i].index,
+			&dyn_reg_info[i].region_conf);
+	}
+	arm_core_mpu_enable();
+
+	/* In ARMv8-M architecture the dynamic regions are programmed on SRAM,
+	 * forming a full partition of the background area, specified by the
+	 * given boundaries.
+	 */
+
+	mpu_reg_index = _mpu_configure_regions(dynamic_regions,
+		regions_num, mpu_reg_index, true);
 }
 
 #if defined(CONFIG_USERSPACE) || defined(CONFIG_MPU_STACK_GUARD) || \
