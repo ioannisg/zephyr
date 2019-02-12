@@ -259,13 +259,13 @@ void test_fatal(void)
 		      crash_reason, _NANO_ERR_STACK_CHK_FAIL);
 #endif
 	zassert_not_equal(rv, TC_FAIL, "thread was not aborted");
-#else
+#else /* CONFIG_ARCH_POSIX */
 	TC_PRINT("test stack overflow - skipped for POSIX arch\n");
 	/*
 	 * We do not have a stack check for the posix ARCH
 	 * again we relay on the native OS
 	 */
-#endif
+#endif /* CONFIG_ARCH_POSIX */
 }
 
 /*test case main entry*/
