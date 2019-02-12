@@ -165,3 +165,67 @@ void configure_builtin_stack_guard(struct k_thread *thread)
 #endif
 }
 #endif /* CONFIG_BUILTIN_STACK_GUARD */
+
+#if defined(CONFIG_MPU_STACK_GUARD)
+
+#define IS_MPU_GUARD_VIOLATION(guard_start, fault_addr) \
+	((fault_addr >= guard_start) && \
+	(fault_addr < (guard_start + MPU_GUARD_ALIGN_AND_SIZE)))
+
+/**
+ * @brief Assess occurrence of current thread's stack corruption
+ *
+ * This function performs an assessment whether a memory fault on a
+ * given memory address is the result of stack memory corruption of
+ * the current thread.
+ *
+ * Thread stack corruption for supervisor threads or user threads in
+ * privilege mode (when User Mode is supported) is reported upon an
+ * attempt to access the stack guard area (if MPU Stack Guard feature
+ * is supported).
+ *
+ * Thread stack corruption for user threads in user mode is not
+ * reported.
+ *
+ * @param fault_addr memory address on which memory access violation
+ *                   has been reported.
+ *
+ * @return 1 if error is a thread stack corruption, otherwise return 0.
+ */
+int evaluate_current_thread_stack_corruption(const u32_t fault_addr)
+{
+	const struct k_thread *thread = _current;
+
+	if (!thread) {
+		return 0;
+	}
+
+#if defined(CONFIG_USERSPACE)
+	if (thread->arch.priv_stack_start) {
+		/* User thread */
+		if ((__get_CONTROL() & CONTROL_nPRIV_Msk) == 0) {
+			/* User thread in privilege mode */
+			if (IS_MPU_GUARD_VIOLATION(
+				thread->arch.priv_stack_start, fault_addr)) {
+				/* Thread's Privilege stack corruption */
+				return 1;
+			}
+		}
+	} else {
+		/* Supervisor thread */
+		if (IS_MPU_GUARD_VIOLATION((u32_t)thread->stack_obj,
+			fault_addr)) {
+			/* Supervisor thread stack corruption */
+			return 1;
+		}
+	}
+#else /* CONFIG_USERSPACE */
+	if (IS_MPU_GUARD_VIOLATION(thread->stack_info.start, fault_addr)) {
+		/* Thread stack corruption */
+		return 1;
+	}
+#endif /* CONFIG_USERSPACE */
+
+	return 0;
+}
+#endif /* CONFIG_MPU_STACK_GUARD */
