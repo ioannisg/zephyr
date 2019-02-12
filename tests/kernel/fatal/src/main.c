@@ -224,15 +224,9 @@ void test_fatal(void)
 			NULL, NULL, NULL, K_PRIO_PREEMPT(PRIORITY), 0,
 			K_NO_WAIT);
 
-#ifdef CONFIG_ARM
-	/* FIXME: See #7706 */
-	zassert_true(crash_reason == _NANO_ERR_STACK_CHK_FAIL ||
-		     crash_reason == _NANO_ERR_HW_EXCEPTION, NULL);
-#else
 	zassert_equal(crash_reason, _NANO_ERR_STACK_CHK_FAIL,
 		      "bad reason code got %d expected %d\n",
 		      crash_reason, _NANO_ERR_STACK_CHK_FAIL);
-#endif
 	zassert_not_equal(rv, TC_FAIL, "thread was not aborted");
 
 	/* Stack sentinel has to be invoked, make sure it happens during
@@ -249,15 +243,9 @@ void test_fatal(void)
 			(k_thread_entry_t)stack_thread2,
 			NULL, NULL, NULL, K_PRIO_PREEMPT(PRIORITY), 0,
 			K_NO_WAIT);
-#ifdef CONFIG_CPU_HAS_NXP_MPU
-	/* FIXME: See #7706 */
-	zassert_true(crash_reason == _NANO_ERR_STACK_CHK_FAIL ||
-		     crash_reason == _NANO_ERR_HW_EXCEPTION, NULL);
-#else
 	zassert_equal(crash_reason, _NANO_ERR_STACK_CHK_FAIL,
 		      "bad reason code got %d expected %d\n",
 		      crash_reason, _NANO_ERR_STACK_CHK_FAIL);
-#endif
 	zassert_not_equal(rv, TC_FAIL, "thread was not aborted");
 #else /* CONFIG_ARCH_POSIX */
 	TC_PRINT("test stack overflow - skipped for POSIX arch\n");
