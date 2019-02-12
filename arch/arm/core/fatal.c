@@ -73,6 +73,10 @@ void _NanoFatalErrorHandler(unsigned int reason,
 		printk("***** Kernel Panic! *****\n");
 		break;
 
+	case _NANO_ERR_GEN_PROT_FAULT:
+		printk("***** General Protection Fault! *****\n");
+		break;
+
 	default:
 		printk("**** Unknown Fatal Error %d! ****\n", reason);
 		break;
