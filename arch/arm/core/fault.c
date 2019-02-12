@@ -193,6 +193,10 @@ static int _MemoryFaultIsRecoverable(NANO_ESF *esf)
 	return 0;
 }
 
+#if defined(CONFIG_MPU_STACK_GUARD)
+int evaluate_current_thread_stack_corruption(const u32_t fault_addr);
+#endif /* CONFIG_MPU_STACK_GUARD */
+
 #if defined(CONFIG_ARMV6_M_ARMV8_M_BASELINE)
 /* HardFault is used for all fault conditions on ARMv6-M. */
 #elif defined(CONFIG_ARMV7_M_ARMV8_M_MAINLINE)
@@ -235,32 +239,17 @@ static u32_t _MpuFault(NANO_ESF *esf, int fromHardFault)
 				/* clear SCB_MMAR[VALID] to reset */
 				SCB->CFSR &= ~SCB_CFSR_MMARVALID_Msk;
 			}
-#if defined(CONFIG_HW_STACK_PROTECTION)
+#if defined(CONFIG_MPU_STACK_GUARD)
 			/* When stack protection is enabled, we need to see
 			 * if the memory violation error is a stack corruption.
 			 * For that we investigate the address fail.
 			 */
-			struct k_thread *thread = _current;
-			u32_t guard_start;
-			if (thread != NULL) {
-#if defined(CONFIG_USERSPACE)
-				guard_start =
-					thread->arch.priv_stack_start ?
-					(u32_t)thread->arch.priv_stack_start :
-					(u32_t)thread->stack_obj;
-#else
-				guard_start = thread->stack_info.start;
-#endif
-				if (mmfar >= guard_start &&
-					mmfar < guard_start +
-					MPU_GUARD_ALIGN_AND_SIZE) {
-					/* Thread stack corruption */
-					reason = _NANO_ERR_STACK_CHK_FAIL;
-				}
+			if (evaluate_current_thread_stack_corruption(mmfar)) {
+				reason = _NANO_ERR_STACK_CHK_FAIL;
 			}
 #else
 		(void)mmfar;
-#endif /* CONFIG_HW_STACK_PROTECTION */
+#endif /* CONFIG_MPU_STACK_GUARD */
 		}
 	}
 	if ((SCB->CFSR & SCB_CFSR_IACCVIOL_Msk) != 0) {
@@ -291,6 +280,8 @@ static u32_t _MpuFault(NANO_ESF *esf, int fromHardFault)
  */
 static int _BusFault(NANO_ESF *esf, int fromHardFault)
 {
+	u32_t reason = _NANO_ERR_HW_EXCEPTION;
+
 	PR_FAULT_INFO("***** BUS FAULT *****\n");
 
 	if (SCB->CFSR & SCB_CFSR_STKERR_Msk) {
@@ -343,7 +334,7 @@ static int _BusFault(NANO_ESF *esf, int fromHardFault)
 				continue;
 			}
 			STORE_xFAR(edr, SYSMPU->SP[i].EDR);
-			STORE_xFAR(ear, SYSMPU->SP[i].EAR);
+			u32_t ear = (u32_t)SYSMPU->SP[i].EAR;
 
 			PR_FAULT_INFO("  NXP MPU error, port %d\n", i);
 			PR_FAULT_INFO("    Mode: %s, %s Address: 0x%x\n",
@@ -354,6 +345,18 @@ static int _BusFault(NANO_ESF *esf, int fromHardFault)
 					"    Type: %s, Master: %d, Regions: 0x%x\n",
 			       edr & BIT(0) ? "Write" : "Read",
 			       EMN(edr), EACD(edr));
+
+#if defined(CONFIG_MPU_STACK_GUARD)
+			/* When stack protection is enabled, we need to see
+			 * if the memory violation error is a stack corruption.
+			 * For that we investigate the address fail.
+			 */
+			if (evaluate_current_thread_stack_corruption(ear)) {
+				reason = _NANO_ERR_STACK_CHK_FAIL;
+			}
+#else
+			(void)ear;
+#endif /* CONFIG_MPU_STACK_GUARD */
 		}
 		SYSMPU->CESR &= ~sperr;
 	}
@@ -368,7 +371,7 @@ static int _BusFault(NANO_ESF *esf, int fromHardFault)
 		return _NANO_ERR_RECOVERABLE;
 	}
 
-	return _NANO_ERR_HW_EXCEPTION;
+	return reason;
 }
 
 /**
@@ -395,12 +398,16 @@ static u32_t _UsageFault(const NANO_ESF *esf)
 #if defined(CONFIG_ARMV8_M_MAINLINE)
 	if ((SCB->CFSR & SCB_CFSR_STKOF_Msk) != 0) {
 		PR_FAULT_INFO("  Stack overflow\n");
-#if defined(CONFIG_HW_STACK_PROTECTION)
+#if defined(CONFIG_BUILTIN_STACK_GUARD)
 		/* Stack Overflows are reported as stack
-		 * corruption errors.
+		 * corruption errors. Note that built-in
+		 * stack overflow mechanism only reports
+		 * corruption of supervisor thread stacks
+		 * (or the interrupt stack), not user
+		 * thread stacks.
 		 */
 		reason = _NANO_ERR_STACK_CHK_FAIL;
-#endif /* CONFIG_HW_STACK_PROTECTION */
+#endif /* CONFIG_BUILTIN_STACK_GUARD */
 	}
 #endif /* CONFIG_ARMV8_M_MAINLINE */
 	if ((SCB->CFSR & SCB_CFSR_NOCP_Msk) != 0) {
