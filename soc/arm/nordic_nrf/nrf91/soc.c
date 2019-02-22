@@ -18,6 +18,8 @@
 #include <nrfx.h>
 #include <soc/nrfx_coredep.h>
 #include <logging/log.h>
+#include <init.h>
+#include <hal/nrf_clock.h>
 
 #ifdef CONFIG_RUNTIME_NMI
 extern void _NmiInit(void);
@@ -69,3 +71,11 @@ void z_arch_busy_wait(u32_t time_us)
 
 
 SYS_INIT(nordicsemi_nrf91_init, PRE_KERNEL_1, 0);
+
+static int pca10090_switch_to_xtal(struct device *dev)
+{
+	nrf_clock_task_trigger(NRF_CLOCK_TASK_HFCLKSTART);
+	return 0;
+}
+
+SYS_INIT(pca10090_switch_to_xtal, POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT);
