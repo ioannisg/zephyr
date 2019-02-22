@@ -6,7 +6,6 @@
 #ifndef _ARM_MPU_MEM_CFG_H_
 #define _ARM_MPU_MEM_CFG_H_
 
-#include <soc.h>
 #include <arch/arm/cortex_m/mpu/arm_mpu.h>
 
 /* Flash Region Definitions */

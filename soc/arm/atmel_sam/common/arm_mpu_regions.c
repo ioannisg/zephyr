@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <soc.h>
+//#include <soc.h>
+#include <misc/util.h>
 #include <arch/arm/cortex_m/mpu/arm_mpu.h>
 
 #include "arm_mpu_mem_cfg.h"

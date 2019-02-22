@@ -43,6 +43,9 @@
 #include "../common/soc_pmc.h"
 #include "../common/soc_gpio.h"
 
+/* Add include for DTS generated information */
+#include <generated_dts_board.h>
+
 #endif /* _ASMLANGUAGE */
 
 /** Processor Clock (HCLK) Frequency */
