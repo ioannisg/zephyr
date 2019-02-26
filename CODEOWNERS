@@ -9,6 +9,10 @@
 /.known-issues/                           @inakypg @nashif
 /arch/arc/                                @vonhust @ruuddw
 /arch/arm/                                @MaureenHelm @galak
+/arch/arm/mpu/                            @ioannisg @agross-linaro
+/arch/arm/cmse/                           @ioannisg @agross-linaro
+/arch/arm/tz/                             @ioannisg @agross-linaro
+/arch/arm/include/cortex-m/               @ioannisg @agross-linaro
 /soc/arm/                                 @MaureenHelm @galak
 /soc/arm/arm/mps2/                        @fvincenzo
 /soc/arm/atmel_sam/sam4s/                 @fallrisk
@@ -147,6 +151,7 @@
 /include/arch/arc/arch.h                  @andrewboie
 /include/arch/arc/v2/irq.h                @andrewboie
 /include/arch/arm/                        @MaureenHelm @galak
+/include/arch/arm/cortex-m/mpu/           @ioannisg @agross-linaro
 /include/arch/arm/cortex_m/irq.h          @andrewboie
 /include/arch/nios2/                      @andrewboie
 /include/arch/nios2/arch.h                @andrewboie
