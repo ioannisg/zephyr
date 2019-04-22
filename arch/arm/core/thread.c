@@ -100,9 +100,16 @@ void z_new_thread(struct k_thread *thread, k_thread_stack_t *stack,
 	z_new_thread_init(thread, pStackMem, stackSize, priority,
 			 options);
 
-	/* carve the thread entry struct from the "base" of the stack */
+	/* Carve the thread entry struct from the "base" of the stack
+	 *
+	 * Note:
+	 * The initial carved stack frame only needs to contain the basic
+	 * stack frame (state context). Rationale:
+	 * - under No/Unshared FP Services mode no FP context is stacked.
+	 * - under FP Services mode FP context is cleared upon thread creation.
+	 */
 	pInitCtx = (struct __esf *)(STACK_ROUND_DOWN(stackEnd -
-		(char *)top_of_stack_offset - sizeof(struct __esf)));
+		(char *)top_of_stack_offset - sizeof(struct __basic_sf)));
 
 #if CONFIG_USERSPACE
 	if ((options & K_USER) != 0) {
