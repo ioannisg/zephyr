@@ -15,14 +15,14 @@
 #include <misc/printk.h>
 void sys_exc_esf_dump(NANO_ESF *esf)
 {
-	printk("r0/a1:  %x  ", esf->a1);
-	printk("r1/a2:  %x  ", esf->a2);
-	printk("r2/a3:  %x\n", esf->a3);
-	printk("r3/a4:  %x  ", esf->a4);
-	printk("r12/ip: %x  ", esf->ip);
-	printk("r14/lr: %x\n", esf->lr);
-	printk("r15/pc: %x  ", esf->pc);
-	printk("xpsr:   %x\n", esf->xpsr);
+	printk("r0/a1:  %x  ", esf->basic.a1);
+	printk("r1/a2:  %x  ", esf->basic.a2);
+	printk("r2/a3:  %x\n", esf->basic.a3);
+	printk("r3/a4:  %x  ", esf->basic.a4);
+	printk("r12/ip: %x  ", esf->basic.ip);
+	printk("r14/lr: %x\n", esf->basic.lr);
+	printk("r15/pc: %x  ", esf->basic.pc);
+	printk("xpsr:   %x\n", esf->basic.xpsr);
 #if defined(CONFIG_FLOAT) && defined(CONFIG_FP_SHARING)
 	for (int i = 0; i < 16; i += 4) {
 		printk("s[%d]:  %x  s[%d]:  %x  s[%d]:  %x  s[%d]:  %x\n",
