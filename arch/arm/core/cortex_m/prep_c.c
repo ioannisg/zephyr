@@ -156,10 +156,21 @@ static inline void enable_floating_point(void)
 	__set_FPSCR(0);
 #else
 	/*
-	 * Disable lazy state preservation so the volatile FP registers are
-	 * always saved on exception.
+	 * Enable both automatic and lazy state preservation of the FP context.
+	 * The FPCA bit of the CONTROL register will be automatically set, if
+	 * the thread uses the floating point registers. Because of lazy state
+	 * preservation the volatile FP registers will not be stacked upon
+	 * exception entry, however, the required area in the stack frame will
+	 * be reserved for them. This configuration improves interrupt latency.
+	 * The registers will eventually be stacked when the thread is swapped
+	 * out during context-switch.
 	 */
-	FPU->FPCCR = FPU_FPCCR_ASPEN_Msk; /* FPU_FPCCR_LSPEN = 0 */
+	FPU->FPCCR = FPU_FPCCR_ASPEN_Msk | FPU_FPCCR_LSPEN_Msk;
+	/*
+	 * Note:
+	 * Caller-saved FPSCR will be initialized by/for each thread that
+	 * intends to use the FP co-processor.
+	 */
 #endif /* CONFIG_FP_SHARING */
 
 	/*
