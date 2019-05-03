@@ -1,0 +1,12 @@
+# Kconfig - PMF M2351 board configuration
+#
+# Copyright (c) 2016 Linaro Limited.
+#
+# SPDX-License-Identifier: Apache-2.0
+
+if BOARD_PFM_M2351
+
+config BOARD
+	default "pfm_m2351"
+
+endif # BOARD_PFM_M2351

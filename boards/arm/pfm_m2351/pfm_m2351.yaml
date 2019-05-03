@@ -1,0 +1,9 @@
+identifier: pfm_m2351
+name: pfm-M2351
+type: mcu
+arch: arm
+toolchain:
+  - zephyr
+  - gnuarmemb
+  - xtools
+ram: 96

@@ -1,0 +1,16 @@
+# Kconfig.defconfig.series - Nuvoton M23 MCU line
+#
+# Copyright (c) 2018 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+if SOC_SERIES_M2351X
+
+source "soc/arm/nuvoton/m2351/Kconfig.defconfig.m2351*"
+
+config SOC_SERIES
+	default "m2351"
+
+
+endif # SOC_SERIES_M2351X

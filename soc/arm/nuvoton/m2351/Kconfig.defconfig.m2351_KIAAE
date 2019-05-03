@@ -1,0 +1,22 @@
+# Kconfig.defconfig.num2351 - Nuvoton M2351 MCU
+#
+# Copyright (c) 2016 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+if SOC_M2351_KIAAE
+
+config SOC
+	string
+	default "m2351_kiaae"
+
+config SYS_CLOCK_HW_CYCLES_PER_SEC
+	int
+	default 64000000
+
+config NUM_IRQS
+	int
+	default 26
+
+endif # SOC_M2351_KIAAE

@@ -1,0 +1,37 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+#include <arm/armv8-m.dtsi>
+
+/ {
+	cpus {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		cpu@0 {
+			device_type = "cpu";
+			compatible = "arm,cortex-m23";
+			reg = <0>;
+		};
+	};
+	
+	flash0: flash@00000000 {
+		label = "FLASH_0";
+	};
+
+	sram0: memory@20000000 {
+		device_type = "memory";
+		compatible = "mmio-sram";
+	};
+	
+	soc {
+		uart0: uart@0 {
+			label = "UART_0";
+			reg = <0x40098000 0x130>;
+			status = "disabled";
+		};
+	};
+};
+
+&nvic {
+	arm,num-irq-priority-bits = <2>;
+};

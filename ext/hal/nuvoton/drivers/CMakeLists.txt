@@ -1,0 +1,1 @@
+zephyr_include_directories_ifdef(CONFIG_SOC_SERIES_M2351X include)

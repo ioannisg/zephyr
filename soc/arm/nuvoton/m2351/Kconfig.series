@@ -1,0 +1,18 @@
+# Kconfig.series - Nuvoton M23 MCU line
+#
+# Copyright (c) 2018 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+config  SOC_SERIES_M2351X
+	bool "Nuvoton M2351 series MCU"
+	select SOC_FAMILY_NUVOTON
+	select CPU_CORTEX_M23
+	select CPU_CORTEX_M_HAS_SYSTICK
+	select CPU_CORTEX_M_HAS_VTOR
+	select CPU_HAS_MPU
+	select XIP
+	select HAS_CMSIS
+	help
+	  Enable support for Nuvoton M2351 MCU series

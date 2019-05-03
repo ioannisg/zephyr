@@ -1,0 +1,15 @@
+# Kconfig.soc - Nuvoton M23 MCU line
+#
+# Copyright (c) 2016 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+choice
+prompt "Nuvoton M23x MCU Selection"
+depends on SOC_SERIES_M2351X
+
+config SOC_M2351_KIAAE
+	bool "M2351_KIAAE"
+
+endchoice
