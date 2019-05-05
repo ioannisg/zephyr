@@ -60,7 +60,7 @@ SECTION_FUNC(TEXT, __pendsv)
     ldr r2, [r1, #_kernel_offset_to_current]
 
     /* addr of callee-saved regs in thread in r0 */
-    ldr r0, =_thread_offset_to_callee_saved
+    movw r0, #_thread_offset_to_callee_saved
     add r0, r2
 
     /* save callee-saved + psp in thread */
@@ -158,7 +158,7 @@ SECTION_FUNC(TEXT, __pendsv)
     cpsie i
 _thread_irq_disabled:
 
-    ldr r4, =_thread_offset_to_callee_saved
+    movw r4, #_thread_offset_to_callee_saved
     adds r0, r2, r4
 
     /* restore r4-r12 for new thread */
@@ -274,7 +274,7 @@ SECTION_FUNC(TEXT, __svc)
     /* Use EXC_RETURN state to find out if stack frame is on the
      * MSP or PSP
      */
-    ldr r0, =0x4
+    mov r0, #0x4
     mov r1, lr
     tst r1, r0
     beq _stack_frame_msp

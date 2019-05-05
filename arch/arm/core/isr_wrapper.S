@@ -91,7 +91,7 @@ _idle_state_cleared:
 
 	mrs r0, IPSR	/* get exception number */
 #if defined(CONFIG_ARMV6_M_ARMV8_M_BASELINE)
-	ldr r1, =16
+	mov r1, #16
 	subs r0, r1	/* get IRQ number */
 	lsls r0, #3	/* table is 8-byte wide */
 #elif defined(CONFIG_ARMV7_M_ARMV8_M_MAINLINE)

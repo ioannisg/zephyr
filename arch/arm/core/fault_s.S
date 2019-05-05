@@ -82,7 +82,7 @@ SECTION_SUBSEC_FUNC(TEXT,__fault,__reserved)
 	/* Use EXC_RETURN state to find out if stack frame is on the
 	 * MSP or PSP
 	 */
-	ldr r0, =0x4
+	mov r0, #0x4
 	mov r1, lr
 	tst r1, r0
 	beq _stack_frame_msp
@@ -117,7 +117,7 @@ _stack_frame_endif:
 	 * of the current security state.
 	 * Instead, we use the EXC_RETURN.SPSEL flag.
 	 */
- 	ldr r0, =0x4
+	mov r0, #0x4
 	mov r1, lr
 	tst r1, r0
 	beq _s_stack_frame_msp
