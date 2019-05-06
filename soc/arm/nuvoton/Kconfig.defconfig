@@ -9,5 +9,7 @@ if SOC_FAMILY_NUVOTON
 
 source "soc/arm/nuvoton/*/Kconfig.defconfig.series"
 
+config BUILD_OUTPUT_HEX
+	default y
 
 endif # SOC_FAMILY_NRF

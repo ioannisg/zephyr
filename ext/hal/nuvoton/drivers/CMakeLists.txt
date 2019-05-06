@@ -1,1 +1,5 @@
 zephyr_include_directories_ifdef(CONFIG_SOC_SERIES_M2351X include)
+
+zephyr_sources_ifdef(CONFIG_SOC_SERIES_M2351X source/nu_clk.c)
+
+zephyr_sources_ifdef(CONFIG_SOC_SERIES_M2351X source/nu_uart.c)

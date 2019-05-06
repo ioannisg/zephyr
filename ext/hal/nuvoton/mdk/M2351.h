@@ -630,7 +630,6 @@ typedef volatile unsigned short vu16;
 #define _GET_BYTE3(u32Param)    (((u32Param) & BYTE3_Msk) >> 24UL)  /*!< Extract Byte 3 (Bit 24~31) from parameter u32Param */
 
 
-#if 0
 /******************************************************************************/
 /*                         Peripheral header files                            */
 /******************************************************************************/
@@ -652,8 +651,8 @@ typedef volatile unsigned short vu16;
 #include "timer_pwm.h"
 #include "wdt.h"
 #include "wwdt.h"
-#include "rtc.h"
-#include "uart.h"
+#include <nu_rtc.h>
+#include <nu_uart.h>
 #include "acmp.h"
 #include "crc.h"
 #include "usbd.h"
@@ -672,7 +671,6 @@ typedef volatile unsigned short vu16;
 #include "scu.h"
 #include "mkromlib.h"
 
-#endif
 
 #endif  /* __M2351_H__ */
 
