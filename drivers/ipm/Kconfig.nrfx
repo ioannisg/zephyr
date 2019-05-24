@@ -1,0 +1,42 @@
+# nRF IPM driver configuration
+
+# Copyright (c) 2019 Nordic Semiconductor ASA
+# SPDX-License-Identifier: Apache-2.0
+
+if IPM_NRFX
+
+nrfx_ipc_num = 0
+source "drivers/ipm/Kconfig.nrfx_ipc_channel"
+nrfx_ipc_num = 1
+source "drivers/ipm/Kconfig.nrfx_ipc_channel"
+nrfx_ipc_num = 2
+source "drivers/ipm/Kconfig.nrfx_ipc_channel"
+nrfx_ipc_num = 3
+source "drivers/ipm/Kconfig.nrfx_ipc_channel"
+nrfx_ipc_num = 4
+source "drivers/ipm/Kconfig.nrfx_ipc_channel"
+nrfx_ipc_num = 5
+source "drivers/ipm/Kconfig.nrfx_ipc_channel"
+nrfx_ipc_num = 6
+source "drivers/ipm/Kconfig.nrfx_ipc_channel"
+nrfx_ipc_num = 7
+source "drivers/ipm/Kconfig.nrfx_ipc_channel"
+nrfx_ipc_num = 8
+source "drivers/ipm/Kconfig.nrfx_ipc_channel"
+nrfx_ipc_num = 9
+source "drivers/ipm/Kconfig.nrfx_ipc_channel"
+nrfx_ipc_num = 10
+source "drivers/ipm/Kconfig.nrfx_ipc_channel"
+nrfx_ipc_num = 11
+source "drivers/ipm/Kconfig.nrfx_ipc_channel"
+nrfx_ipc_num = 12
+source "drivers/ipm/Kconfig.nrfx_ipc_channel"
+nrfx_ipc_num = 13
+source "drivers/ipm/Kconfig.nrfx_ipc_channel"
+nrfx_ipc_num = 14
+source "drivers/ipm/Kconfig.nrfx_ipc_channel"
+nrfx_ipc_num = 15
+source "drivers/ipm/Kconfig.nrfx_ipc_channel"
+
+
+endif #IPM_NRFX
