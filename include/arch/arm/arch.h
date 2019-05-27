@@ -53,6 +53,21 @@ extern "C" {
 #endif
 
 /**
+ * @brief Declare the minimum alignment for a thread stack
+ *
+ * Denotes the minimum required alignment of a thread stack.
+ *
+ * Note:
+ * User thread stacks must respect the minimum MPU region
+ * alignment requirement.
+ */
+#if defined(CONFIG_USERSPACE)
+#define THREAD_MIN_STACK_ALIGN CONFIG_ARM_MPU_REGION_MIN_ALIGN_AND_SIZE
+#else
+#define THREAD_MIN_STACK_ALIGN STACK_ALIGN_SIZE
+#endif
+
+/**
  * @brief Declare a minimum MPU guard alignment and size
  *
  * This specifies the minimum MPU guard alignment/size for the MPU. This
@@ -99,6 +114,36 @@ extern "C" {
 #endif
 
 /**
+ * @brief Declare the MPU guard alignment and size for a thread stack
+ *        that is using the Floating Point services.
+ *
+ * For threads that are using the Floating Point services under Shared
+ * Registers mode the processor stacks both the basic stack frame and
+ * the FP caller-saved context upon exception entry. Therefore, a wide
+ * guard region is required to guarantee stack-overflow detection.
+ */
+#if defined(CONFIG_FLOAT) && defined(CONFIG_FP_SHARING) \
+	&& defined(CONFIG_MPU_STACK_GUARD)
+#define MPU_GUARD_ALIGN_AND_SIZE_FLOAT CONFIG_MPU_STACK_GUARD_MIN_SIZE_FLOAT
+#else
+#define MPU_GUARD_ALIGN_AND_SIZE_FLOAT 0
+#endif
+
+/**
+ * @brief Define alignment of an MPU guard
+ *
+ * Minimum alignment of the start address of an MPU guard, depending on
+ * whether the MPU architecture enforces a size (and power-of-two) alignment
+ * requirement.
+ */
+#if defined(CONFIG_MPU_REQUIRES_POWER_OF_TWO_ALIGNMENT)
+#define MPU_GUARD_ALIGN (MAX(MPU_GUARD_ALIGN_AND_SIZE, \
+	MPU_GUARD_ALIGN_AND_SIZE_FLOAT))
+#else
+#define MPU_GUARD_ALIGN MPU_GUARD_ALIGN_AND_SIZE
+#endif
+
+/**
  * @brief Define alignment of a stack buffer
  *
  * This is used for two different things:
@@ -107,11 +152,7 @@ extern "C" {
  * 2) Used to determine the alignment of a stack buffer
  *
  */
-#if defined(CONFIG_USERSPACE)
-#define STACK_ALIGN    CONFIG_ARM_MPU_REGION_MIN_ALIGN_AND_SIZE
-#else
-#define STACK_ALIGN    MAX(STACK_ALIGN_SIZE, MPU_GUARD_ALIGN_AND_SIZE)
-#endif
+#define STACK_ALIGN MAX(THREAD_MIN_STACK_ALIGN, MPU_GUARD_ALIGN)
 
 /**
  * @brief Calculate power of two ceiling for a buffer size input
