@@ -212,19 +212,26 @@ void z_arch_configure_dynamic_mpu_regions(struct k_thread *thread)
 
 	/* Privileged stack guard */
 	u32_t guard_start;
+	u32_t guard_size = MPU_GUARD_ALIGN_AND_SIZE;
+
+#if defined(CONFIG_FLOAT) && defined(CONFIG_FP_SHARING)
+	if ((thread->base.user_options & K_FP_REGS) != 0) {
+		guard_size = MPU_GUARD_ALIGN_AND_SIZE_FLOAT;
+	}
+#endif
+
 #if defined(CONFIG_USERSPACE)
 	if (thread->arch.priv_stack_start) {
 		guard_start = thread->arch.priv_stack_start;
 	} else {
-		guard_start = thread->stack_info.start -
-			MPU_GUARD_ALIGN_AND_SIZE;
+		guard_start = thread->stack_info.start - guard_size;
+
 		__ASSERT((u32_t)thread->stack_obj == guard_start,
 		"Guard start (0x%x) not beginning at stack object (0x%x)\n",
 		guard_start, (u32_t)thread->stack_obj);
 	}
 #else
-	guard_start = thread->stack_info.start -
-		MPU_GUARD_ALIGN_AND_SIZE;
+	guard_start = thread->stack_info.start - guard_size;
 #endif /* CONFIG_USERSPACE */
 
 	__ASSERT(region_num < _MAX_DYNAMIC_MPU_REGIONS_NUM,
@@ -232,7 +239,7 @@ void z_arch_configure_dynamic_mpu_regions(struct k_thread *thread)
 	guard = (const struct k_mem_partition)
 	{
 		guard_start,
-		MPU_GUARD_ALIGN_AND_SIZE,
+		guard_size,
 		K_MEM_PARTITION_P_RO_U_NA
 	};
 	dynamic_regions[region_num] = &guard;
