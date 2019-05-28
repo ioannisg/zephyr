@@ -94,6 +94,19 @@ void z_new_thread(struct k_thread *thread, k_thread_stack_t *stack,
 	 */
 	stackSize -= MPU_GUARD_ALIGN_AND_SIZE;
 #endif
+
+#if defined(CONFIG_FLOAT) && defined(CONFIG_FP_SHARING)
+	/* It is required to allocate a wide MPU guard region, to detect stack
+	 * overflow (if applicable) for a thread which intends to use the FP
+	 * services.
+	 */
+	if ((options & K_FP_REGS) != 0) {
+		pStackMem +=
+			MPU_GUARD_ALIGN_AND_SIZE_FLOAT - MPU_GUARD_ALIGN_AND_SIZE;
+		stackSize -=
+			MPU_GUARD_ALIGN_AND_SIZE_FLOAT - MPU_GUARD_ALIGN_AND_SIZE;
+	}
+#endif
 	stackEnd = pStackMem + stackSize;
 
 	struct __esf *pInitCtx;
