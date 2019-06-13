@@ -39,6 +39,20 @@ header = """%compare-lengths
 """
 
 
+# Adding an MPU stack guard in the beginning of the area that is
+# reserved for thread privilege stacks. This is to be used by the
+# first thread privilege stack; the remainder of the stacks will
+# not require a guard area to be reserved, because they can use
+# as stack guard the area exactly below the start of this stack
+# buffer (i.e taken from the previous  privilege stack buffer).
+priv_stack_init_guard = ("#if MPU_GUARD_ALIGN != 0\n"
+                        "static u8_t __used"
+                        " __aligned(MPU_GUARD_ALIGN)"
+                        " priv_stack_init_guard[MPU_GUARD_ALIGN];\n"
+                        "#endif /* MPU_GUARD_ALIGN != 0 */\n")
+
+# Each privilege stack object needs to respect the alignment
+# constraints as specified in arch.h
 priv_stack_decl_temp = ("static u8_t __used"
                         " __aligned(PRIVILEGE_STACK_ALIGN)"
                         " priv_stack_%x[CONFIG_PRIVILEGED_STACK_SIZE];\n")
@@ -77,6 +91,7 @@ def write_gperf_table(fp, eh, objs):
     # priv stack declarations
     fp.write("%{\n")
     fp.write(includes)
+    fp.write(priv_stack_init_guard)
     for obj_addr in objs:
         fp.write(priv_stack_decl_temp % (obj_addr))
     fp.write("%}\n")
