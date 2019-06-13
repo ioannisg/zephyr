@@ -40,7 +40,7 @@ header = """%compare-lengths
 
 
 priv_stack_decl_temp = ("static u8_t __used"
-                        " __aligned(CONFIG_PRIVILEGED_STACK_SIZE)"
+                        " __aligned(PRIVILEGE_STACK_ALIGN)"
                         " priv_stack_%x[CONFIG_PRIVILEGED_STACK_SIZE];\n")
 
 
