@@ -155,6 +155,19 @@ extern "C" {
 #define STACK_ALIGN MAX(THREAD_MIN_STACK_ALIGN, MPU_GUARD_ALIGN)
 
 /**
+ * @brief Define alignment of a privilege stack buffer
+ *
+ * This is used to determine the required alignment of threads'
+ * privilege stacks when building with user mode support. Note
+ * that the privilege stacks do not need to respect the minimum
+ * MPU region alignment requirement (unless this is enforced via
+ * the MPU Stack Guard feature).
+ */
+#if defined(CONFIG_USERSPACE)
+#define PRIVILEGE_STACK_ALIGN MAX(STACK_ALIGN_SIZE, MPU_GUARD_ALIGN)
+#endif
+
+/**
  * @brief Calculate power of two ceiling for a buffer size input
  *
  */
