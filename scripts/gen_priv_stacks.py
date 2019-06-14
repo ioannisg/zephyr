@@ -54,7 +54,7 @@ priv_stack_init_guard = ("#if MPU_GUARD_ALIGN != 0\n"
 # Each privilege stack object needs to respect the alignment
 # constraints as specified in arch.h
 priv_stack_decl_temp = ("static u8_t __used"
-                        " __aligned(PRIVILEGE_STACK_ALIGN)"
+                        " __aligned(CONFIG_PRIVILEGED_STACK_SIZE)"
                         " priv_stack_%x[CONFIG_PRIVILEGED_STACK_SIZE];\n")
 
 
