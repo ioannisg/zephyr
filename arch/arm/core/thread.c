@@ -265,11 +265,11 @@ u32_t z_check_thread_stack_fail(const u32_t fault_addr, const u32_t psp)
 		if ((__get_CONTROL() & CONTROL_nPRIV_Msk) == 0) {
 			/* User thread in privilege mode */
 			if (IS_MPU_GUARD_VIOLATION(
-				thread->arch.priv_stack_start,
+				thread->arch.priv_stack_start -
+					MPU_GUARD_ALIGN_AND_SIZE,
 				fault_addr, psp)) {
 				/* Thread's privilege stack corruption */
-				return thread->arch.priv_stack_start +
-					MPU_GUARD_ALIGN_AND_SIZE;
+				return thread->arch.priv_stack_start;
 			}
 		} else {
 			if (psp < (u32_t)thread->stack_obj) {
