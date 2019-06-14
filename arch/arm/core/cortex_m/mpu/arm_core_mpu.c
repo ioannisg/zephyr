@@ -16,6 +16,10 @@
 #include <logging/log.h>
 LOG_MODULE_REGISTER(mpu);
 
+#if defined(CONFIG_USERSPACE)
+extern K_THREAD_STACK_DEFINE(_interrupt_stack, CONFIG_ISR_STACK_SIZE);
+#endif
+
 /*
  * Maximum number of dynamic memory partitions that may be supplied to the MPU
  * driver for programming during run-time. Note that the actual number of the
@@ -84,6 +88,22 @@ void z_arch_configure_static_mpu_regions(void)
 		.attr = K_MEM_PARTITION_P_RX_U_RX,
 		};
 #endif /* CONFIG_ARCH_HAS_RAMFUNC_SUPPORT */
+#if defined(CONFIG_USERSPACE)
+		/* Program all privilege stack area as Read Only. */
+		const struct k_mem_partition priv_stack_region =
+		{
+		.start = (u32_t)&_priv_stacks_ram_start,
+		.size = (u32_t)&_priv_stacks_ram_end - (u32_t)&_priv_stacks_ram_start,
+		.attr = K_MEM_PARTITION_P_RO_U_NA,
+		};
+		/* Program Interrupt Stack as Read Write. */
+		const struct k_mem_partition interrupt_stack_region =
+		{
+		.start = (u32_t)_interrupt_stack,
+		.size = CONFIG_ISR_STACK_SIZE,
+		.attr = K_MEM_PARTITION_P_RW_U_NA,
+		};
+#endif
 
 	/* Define a constant array of k_mem_partition objects
 	 * to hold the configuration of the respective static
@@ -97,8 +117,12 @@ void z_arch_configure_static_mpu_regions(void)
 		&nocache_region,
 #endif /* CONFIG_NOCACHE_MEMORY */
 #if defined(CONFIG_ARCH_HAS_RAMFUNC_SUPPORT)
-		&ramfunc_region
+		&ramfunc_region,
 #endif /* CONFIG_ARCH_HAS_RAMFUNC_SUPPORT */
+#if defined(CONFIG_USERSPACE)
+		&priv_stack_region,
+		&interrupt_stack_region,
+#endif /* CONFIG_USERSPACE */
 	};
 
 	/* Configure the static MPU regions within firmware SRAM boundaries.
@@ -212,9 +236,13 @@ void z_arch_configure_dynamic_mpu_regions(struct k_thread *thread)
 
 	/* Privileged stack guard */
 	u32_t guard_start;
+	u32_t guard_size = MPU_GUARD_ALIGN_AND_SIZE;
+	k_mem_partition_attr_t guard_attr = K_MEM_PARTITION_P_RO_U_NA;
 #if defined(CONFIG_USERSPACE)
 	if (thread->arch.priv_stack_start) {
 		guard_start = thread->arch.priv_stack_start;
+		guard_size = CONFIG_PRIVILEGED_STACK_SIZE;
+		guard_attr = K_MEM_PARTITION_P_RW_U_NA;
 	} else {
 		guard_start = thread->stack_info.start -
 			MPU_GUARD_ALIGN_AND_SIZE;
@@ -232,8 +260,8 @@ void z_arch_configure_dynamic_mpu_regions(struct k_thread *thread)
 	guard = (const struct k_mem_partition)
 	{
 		guard_start,
-		MPU_GUARD_ALIGN_AND_SIZE,
-		K_MEM_PARTITION_P_RO_U_NA
+		guard_size,
+		guard_attr
 	};
 	dynamic_regions[region_num] = &guard;
 

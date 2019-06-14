@@ -42,7 +42,7 @@ header = """%compare-lengths
 # Each privilege stack buffer needs to respect the alignment
 # constraints as specified in arm/arch.h.
 priv_stack_decl_temp = ("static u8_t __used"
-                        " __aligned(PRIVILEGE_STACK_ALIGN)"
+                        " __aligned(CONFIG_PRIVILEGED_STACK_SIZE)"
                         " priv_stack_%x[CONFIG_PRIVILEGED_STACK_SIZE];\n")
 
 
