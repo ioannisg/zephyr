@@ -183,8 +183,10 @@ SECTION_FUNC(TEXT, z_arm_do_syscall)
     cmp r6, ip
     bne valid_syscall
 
-    /* BAD SYSCALL path */
-    /* fixup stack frame on unprivileged stack, adding ssf */
+    /* BAD SYSCALL path
+     * Use the default thread stack (i.e. do not switch to the privilege stack)
+     * Fixup stack frame on unprivileged stack, adding ssf
+     */
     mov ip, sp
     push {r4,r5,ip,lr}
     b dispatch_syscall
