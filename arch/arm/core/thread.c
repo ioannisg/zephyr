@@ -203,7 +203,8 @@ FUNC_NORETURN void z_arch_user_mode_enter(k_thread_entry_t user_entry,
  *
  * This function configures per thread stack guards by reprogramming
  * the built-in Process Stack Pointer Limit Register (PSPLIM).
- * The functionality is meant to be used during context switch.
+ * The functionality is meant to be used during context switch (PendSV)
+ * or during system call setup (SVC).
  *
  * @param thread thread info data structure.
  */
@@ -218,9 +219,35 @@ void configure_builtin_stack_guard(struct k_thread *thread)
 		 */
 		return;
 	}
-	u32_t guard_start = thread->arch.priv_stack_start ?
-			    (u32_t)thread->arch.priv_stack_start :
-			    (u32_t)thread->stack_obj;
+
+	u32_t guard_start;
+
+	if (thread->arch.priv_stack_start) {
+		/* User thread in privilege mode (system call).
+		 *
+		 * Note: the context switch may be preempting the system call
+		 * at an early stage, i.e. BEFORE the thread has switched to
+		 * the privileged stack, or, this is a bad system call, during
+		 * which the thread continues to use the default stack. So we
+		 * need to program the guard to the current stack, determined
+		 * by inspecting the PSP. We can do that since the function is
+		 * only invoked in handler mode (SVC or PendSV), which (in ARM)
+		 * uses the MSP.
+		 */
+		u32_t psp = __get_PSP();
+
+		if ((psp >= thread->arch.priv_stack_start) &&
+			(psp <= (thread->arch.priv_stack_start +
+				CONFIG_PRIVILEGED_STACK_SIZE))) {
+			/* Thread has already switched to the privilege stack */
+			guard_start = thread->arch.priv_stack_start;
+		} else {
+			guard_start = (u32_t)thread->stack_obj;
+		}
+	} else {
+		/* Supervisor thread. */
+		guard_start = (u32_t)thread->stack_obj;
+	}
 
 	__ASSERT(thread->stack_info.start == ((u32_t)thread->stack_obj),
 		"stack_info.start does not point to the start of the"
