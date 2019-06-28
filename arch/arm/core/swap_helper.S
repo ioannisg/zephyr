@@ -482,6 +482,20 @@ valid_syscall_id:
     isb
     pop {r0, r1}
 
+#if defined(CONFIG_BUILTIN_STACK_GUARD)
+    /* After returning from the SVC, the thread will be running in
+     * privileged mode, but it will still be using the default thread
+     * stack. To be able to handle the rare case of a stack overflow
+     * while preparing to switch to the privilege stack, we re-program
+     * the stack overflow guard before exiting the SVC.
+     */
+     push {r0, r1, r2, r3, ip, lr}
+     ldr r0, =_kernel
+     ldr r0, [r0, #_kernel_offset_to_current]
+     bl configure_builtin_stack_guard
+     pop {r0, r1, r2, r3, ip, lr}
+#endif /* CONFIG_BUILTIN_STACK_GUARD */
+
     /* return from SVC to the modified LR - z_arm_do_syscall */
     bx lr
 #endif
