@@ -15,7 +15,8 @@ K_THREAD_STACK_EXTERN(ustack);
 
 void spin_for_ms(int ms)
 {
-#if defined(CONFIG_X86_64) && defined(CONFIG_QEMU_TARGET)
+#if (defined(CONFIG_SOC_SERIES_MPS2) || defined(CONFIG_X86_64)) \
+		&& defined(CONFIG_QEMU_TARGET)
 	/* qemu-system-x86_64 has a known bug with the hpet device
 	 * where it will drop interrupts if you try to spin on the
 	 * counter.
