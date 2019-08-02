@@ -1,0 +1,9 @@
+# Kconfig - nRF5340 PCA10095 board configuration
+#
+# Copyright (c) 2019 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: Apache-2.0
+
+if BOARD_NRF5340_PCA10095_CPU0 || BOARD_NRF5340_PCA10095_CPU0NS
+
+endif # BOARD_NRF5340_PCA10095_CPU0 || BOARD_NRF5340_PCA10095_CPU0NS

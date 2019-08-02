@@ -1,0 +1,14 @@
+identifier: nrf5340_pca10095_cpu0
+name: nRF5340-PCA10095-application-MCU
+type: mcu
+arch: arm
+toolchain:
+  - gnuarmemb
+  - xtools
+  - zephyr
+ram: 64
+flash: 256
+supported:
+  - i2c
+  - pwm
+  - watchdog
