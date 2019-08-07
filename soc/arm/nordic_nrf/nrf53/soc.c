@@ -28,6 +28,8 @@ extern void z_NmiInit(void);
 
 #if defined(CONFIG_SOC_NRF5340_CPU0)
 #include <system_nrf5340_application.h>
+#elif defined(CONFIG_SOC_NRF5340_CPU1)
+#include <system_nrf5340_network.h>
 #else
 #error "Unknown nRF53 SoC."
 #endif
@@ -48,6 +50,9 @@ static int nordicsemi_nrf53_init(struct device *arg)
 	/* Enable the instruction & data cache */
 	NRF_CACHE_S->ENABLE = CACHE_ENABLE_ENABLE_Msk;
 #endif /* CONFIG_SOC_NRF5340_CPU0 */
+#ifdef CONFIG_SOC_NRF5340_CPU1
+	NRF_NVMC_NS->ICACHECNF |= NVMC_ICACHECNF_CACHEEN_Enabled;
+#endif /* CONFIG_SOC_NRF5340_CPU1 */
 #endif
 
 	/* Install default handler that simply resets the CPU
