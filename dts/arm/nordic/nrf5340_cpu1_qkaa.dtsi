@@ -17,6 +17,6 @@
 
 / {
 	soc {
-		compatible = "nordic,nRF5340-CPU1-QIAA", "nordic,nRF5340-CPU1", "nordic,nRF53", "simple-bus";
+		compatible = "nordic,nRF5340-CPU1-QKAA", "nordic,nRF5340-CPU1", "nordic,nRF53", "simple-bus";
 	};
 };

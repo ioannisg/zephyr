@@ -1,0 +1,13 @@
+identifier: nrf5340_pca10095_cpu1
+name: nRF5340-PCA10095-network-MCU
+type: mcu
+arch: arm
+toolchain:
+  - gnuarmemb
+  - xtools
+  - zephyr
+ram: 64
+flash: 256
+supported:
+  - i2c
+  - watchdog
