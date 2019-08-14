@@ -10,4 +10,9 @@ endif # BOARD_NRF5340_PCA10095_CPU0 || BOARD_NRF5340_PCA10095_CPU0NS
 
 if BOARD_NRF5340_PCA10095_CPU1
 
+# BT_CTLR depends on BT. When BT is enabled we should default to also
+# enabling the controller.
+config BT_CTLR
+	default y if BT
+
 endif # BOARD_NRF5340_PCA10095_CPU1
