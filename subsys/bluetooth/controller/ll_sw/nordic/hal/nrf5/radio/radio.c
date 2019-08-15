@@ -33,7 +33,8 @@
 
 #if defined(CONFIG_SOC_SERIES_NRF51X)
 #define RADIO_PDU_LEN_MAX (BIT(5) - 1)
-#elif defined(CONFIG_SOC_COMPATIBLE_NRF52X)
+#elif defined(CONFIG_SOC_COMPATIBLE_NRF52X) || \
+	defined(CONFIG_SOC_SERIES_NRF53X)
 #define RADIO_PDU_LEN_MAX (BIT(8) - 1)
 #else
 #error "Platform not defined."
@@ -202,7 +203,8 @@ void radio_pkt_configure(u8_t bits_len, u8_t max_len, u8_t flags)
 	if (!IS_ENABLED(CONFIG_BT_CTLR_DATA_LENGTH_CLEAR) && dc) {
 		bits_len = 5U;
 	}
-#elif defined(CONFIG_SOC_COMPATIBLE_NRF52X)
+#elif defined(CONFIG_SOC_COMPATIBLE_NRF52X) || \
+	defined(CONFIG_SOC_SERIES_NRF53X)
 	extra = 0U;
 
 	phy = (flags >> 1) & 0x07; /* phy */
@@ -976,7 +978,7 @@ void *radio_ccm_rx_pkt_set(struct ccm *ccm, u8_t phy, void *pkt)
 	mode = (CCM_MODE_MODE_Decryption << CCM_MODE_MODE_Pos) &
 	       CCM_MODE_MODE_Msk;
 
-#if defined(CONFIG_SOC_COMPATIBLE_NRF52X)
+#if defined(CONFIG_SOC_COMPATIBLE_NRF52X) || defined(CONFIG_SOC_SERIES_NRF53X)
 	/* Enable CCM support for 8-bit length field PDUs. */
 	mode |= (CCM_MODE_LENGTH_Extended << CCM_MODE_LENGTH_Pos) &
 		CCM_MODE_LENGTH_Msk;
@@ -1015,7 +1017,7 @@ void *radio_ccm_rx_pkt_set(struct ccm *ccm, u8_t phy, void *pkt)
 #endif /* CONFIG_HAS_HW_NRF_RADIO_BLE_CODED */
 #endif /* CONFIG_BT_CTLR_PHY_CODED */
 	}
-#endif /* CONFIG_SOC_COMPATIBLE_NRF52X */
+#endif /* CONFIG_SOC_COMPATIBLE_NRF52X || CONFIG_SOC_SERIES_NRF53X */
 
 	NRF_CCM->MODE = mode;
 	NRF_CCM->CNFPTR = (u32_t)ccm;
@@ -1042,7 +1044,7 @@ void *radio_ccm_tx_pkt_set(struct ccm *ccm, void *pkt)
 	NRF_CCM->ENABLE = CCM_ENABLE_ENABLE_Enabled;
 	mode = (CCM_MODE_MODE_Encryption << CCM_MODE_MODE_Pos) &
 	       CCM_MODE_MODE_Msk;
-#if defined(CONFIG_SOC_COMPATIBLE_NRF52X)
+#if defined(CONFIG_SOC_COMPATIBLE_NRF52X) || defined(CONFIG_SOC_SERIES_NRF53X)
 	/* Enable CCM support for 8-bit length field PDUs. */
 	mode |= (CCM_MODE_LENGTH_Extended << CCM_MODE_LENGTH_Pos) &
 		CCM_MODE_LENGTH_Msk;
