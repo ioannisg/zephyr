@@ -307,7 +307,7 @@ config BT_CTLR_DATA_LENGTH
 	# Update procedure in the Controller.
 	bool
 	depends on BT_DATA_LEN_UPDATE
-	default y if SOC_COMPATIBLE_NRF52X || BT_CTLR_DATA_LENGTH_CLEAR
+	default y if (SOC_COMPATIBLE_NRF52X || SOC_SERIES_NRF53X) || BT_CTLR_DATA_LENGTH_CLEAR
 
 config BT_CTLR_DATA_LENGTH_MAX
 	int "Maximum data length supported"
@@ -323,7 +323,7 @@ config BT_CTLR_PHY
 	bool
 	depends on BT_PHY_UPDATE
 	select BT_CTLR_EXT_REJ_IND
-	default y if SOC_COMPATIBLE_NRF52X || BT_CTLR_PHY_2M_NRF
+	default y if (SOC_COMPATIBLE_NRF52X || SOC_SERIES_NRF53X) || BT_CTLR_PHY_2M_NRF
 
 config BT_CTLR_MIN_USED_CHAN
 	bool "Minimum Number of Used Channels"
@@ -496,7 +496,7 @@ if BT_LL_SW_SPLIT
 config BT_CTLR_LLL_PRIO
 	int "Lower Link Layer (Radio) IRQ priority"
 	range 0 3 if SOC_SERIES_NRF51X
-	range 0 6 if SOC_SERIES_NRF52X
+	range 0 6 if (SOC_SERIES_NRF52X || SOC_SERIES_NRF53X)
 	default 0
 	help
 	  The interrupt priority for event preparation and radio IRQ.
@@ -504,7 +504,7 @@ config BT_CTLR_LLL_PRIO
 config BT_CTLR_ULL_HIGH_PRIO
 	int "Upper Link Layer High IRQ priority"
 	range BT_CTLR_LLL_PRIO 3 if SOC_SERIES_NRF51X
-	range BT_CTLR_LLL_PRIO 6 if SOC_SERIES_NRF52X
+	range BT_CTLR_LLL_PRIO 6 if (SOC_SERIES_NRF52X || SOC_SERIES_NRF53X)
 	default BT_CTLR_LLL_PRIO
 	help
 	  The interrupt priority for Ticker's Worker IRQ and Upper Link Layer
@@ -513,7 +513,7 @@ config BT_CTLR_ULL_HIGH_PRIO
 config BT_CTLR_ULL_LOW_PRIO
 	int "Upper Link Layer Low IRQ priority"
 	range BT_CTLR_ULL_HIGH_PRIO 3 if SOC_SERIES_NRF51X
-	range BT_CTLR_ULL_HIGH_PRIO 6 if SOC_SERIES_NRF52X
+	range BT_CTLR_ULL_HIGH_PRIO 6 if (SOC_SERIES_NRF52X || SOC_SERIES_NRF53X)
 	default BT_CTLR_ULL_HIGH_PRIO
 	help
 	  The interrupt priority for Ticker's Job IRQ and Upper Link Layer
@@ -552,7 +552,7 @@ endif # BT_LL_SW_SPLIT
 
 config BT_CTLR_RADIO_ENABLE_FAST
 	bool "Use tTXEN/RXEN,FAST ramp-up"
-	depends on SOC_COMPATIBLE_NRF52X
+	depends on SOC_COMPATIBLE_NRF52X || SOC_SERIES_NRF53X
 	default y
 	help
 	  Enable use of fast radio ramp-up mode.
@@ -566,7 +566,7 @@ config BT_CTLR_TIFS_HW
 
 config BT_CTLR_SW_SWITCH_SINGLE_TIMER
 	bool "Single TIMER tIFS Trx SW switching"
-	depends on (!BT_CTLR_TIFS_HW) && SOC_COMPATIBLE_NRF52X
+	depends on (!BT_CTLR_TIFS_HW) && (SOC_COMPATIBLE_NRF52X || SOC_SERIES_NRF53X)
 	help
 	  Implement the tIFS Trx SW switch with the same TIMER
 	  instance, as the one used for BLE event timing. Requires
