@@ -5,6 +5,11 @@
 
 if BOARD_NRF5340_DK_NRF5340_CPUAPP || BOARD_NRF5340_DK_NRF5340_CPUAPPNS
 
+# When BT is enabled we should default to also
+# enabling the Vendor Specific commands.
+config BT_HAS_HCI_VS
+	default y if BT
+
 endif # BOARD_NRF5340_DK_NRF5340_CPUAPP || BOARD_NRF5340_DK_NRF5340_CPUAPPNS
 
 if BOARD_NRF5340_DK_NRF5340_CPUNET
