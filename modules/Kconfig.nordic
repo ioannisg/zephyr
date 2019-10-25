@@ -35,6 +35,10 @@ config NRFX_I2S
 	bool "Enable I2S driver"
 	depends on HAS_HW_NRF_I2S
 
+config NRFX_IPC
+	bool "Enable IPC driver"
+	depends on HAS_HW_NRF_IPC
+
 config NRFX_LPCOMP
 	bool "Enable LPCOMP driver"
 	depends on HAS_HW_NRF_LPCOMP
@@ -339,7 +343,17 @@ config NRFX_USBD
 
 config NRFX_WDT
 	bool "Enable WDT driver"
-	depends on HAS_HW_NRF_WDT
+	depends on HAS_HW_NRF_WDT || HAS_HW_NRF_WDT0 || HAS_HW_NRF_WDT1
+
+config NRFX_WDT0
+	bool "Enable WDT0 instance"
+	depends on HAS_HW_NRF_WDT || HAS_HW_NRF_WDT0
+	select NRFX_WDT
+
+config NRFX_WDT1
+	bool "Enable WDT1 instance"
+	depends on HAS_HW_NRF_WDT1
+	select NRFX_WDT
 
 config NRFX_PRS
 	bool "Enable Peripheral Resource Sharing module"
