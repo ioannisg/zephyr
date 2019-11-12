@@ -21,12 +21,12 @@
 #define LOG_MODULE_NAME bt_hci_driver
 #include "common/log.h"
 
-#define OPEN_AMP_CMD 0x01
-#define OPEN_AMP_ACL 0x02
-#define OPEN_AMP_SCO 0x03
-#define OPEN_AMP_EVT 0x04
+#define RPMSG_CMD 0x01
+#define RPMSG_ACL 0x02
+#define RPMSG_SCO 0x03
+#define RPMSG_EVT 0x04
 
-static void bt_open_amp_rx(u8_t *data, size_t len);
+static void bt_rpmsg_rx(u8_t *data, size_t len);
 
 static K_SEM_DEFINE(sync_sem, 0, 1);
 
@@ -85,7 +85,7 @@ static void virtio_set_status(struct virtio_device *vdev, unsigned char status)
 
 static u32_t virtio_get_features(struct virtio_device *vdev)
 {
-	return 1 << VIRTIO_RPMSG_F_NS;
+	return BIT(VIRTIO_RPMSG_F_NS);
 }
 
 static void virtio_set_features(struct virtio_device *vdev, u32_t features)
@@ -95,7 +95,9 @@ static void virtio_set_features(struct virtio_device *vdev, u32_t features)
 
 static void virtio_notify(struct virtqueue *vq)
 {
-	int status = ipm_send(ipm_tx_handle, 0, 0, NULL, 0);
+	int status;
+
+	status = ipm_send(ipm_tx_handle, 0, 0, NULL, 0);
 	if (status != 0) {
 		BT_ERR("ipm_send failed to notify: %d", status);
 	}
@@ -121,7 +123,7 @@ int endpoint_cb(struct rpmsg_endpoint *ept, void *data, size_t len,
 	BT_DBG("Received message of %u bytes.", len);
 	BT_HEXDUMP_DBG((uint8_t *)data, len, "Data:");
 
-	bt_open_amp_rx(data, len);
+	bt_rpmsg_rx(data, len);
 
 	return RPMSG_SUCCESS;
 }
@@ -144,9 +146,10 @@ void ns_bind_cb(struct rpmsg_device *rdev, const char *name, u32_t dest)
 	k_sem_give(&sync_sem);
 }
 
-static int bt_open_amp_init_internal(void)
+static int bt_rpmsg_init_internal(void)
 {
 	int status;
+	struct metal_init_params metal_params = METAL_INIT_DEFAULTS;
 
 	static struct virtio_vring_info     rvrings[2];
 	static struct rpmsg_virtio_shm_pool shpool;
@@ -156,7 +159,6 @@ static int bt_open_amp_init_internal(void)
 	static struct metal_device          *device;
 
 	/* Libmetal setup */
-	struct metal_init_params metal_params = METAL_INIT_DEFAULTS;
 	status = metal_init(&metal_params);
 	if (status != 0) {
 		BT_ERR("metal_init: failed - error code %d", status);
@@ -234,8 +236,8 @@ static int bt_open_amp_init_internal(void)
 	}
 
 	/* Since we are using name service, we need to wait for a response
-	* from NS setup and than we need to process it
-	*/
+	 * from NS setup and than we need to process it
+	 */
 	virtqueue_notification(vq[0]);
 
 	/* Wait til nameservice ep is setup */
@@ -254,13 +256,12 @@ static inline bool bt_buf_get_prio(struct net_buf *buf)
 	return (bool)(*((u8_t *)net_buf_user_data(buf) + 1));
 }
 
-static struct net_buf *bt_open_amp_evt_recv(u8_t **data, size_t *remaining)
+static struct net_buf *bt_rpmsg_evt_recv(u8_t **data, size_t *remaining)
 {
 	struct bt_hci_evt_hdr hdr;
 	struct net_buf *buf;
 
-	if (*remaining < sizeof(hdr))
-	{
+	if (*remaining < sizeof(hdr)) {
 		BT_ERR("Not enought data for event header");
 		return NULL;
 	}
@@ -287,7 +288,7 @@ static struct net_buf *bt_open_amp_evt_recv(u8_t **data, size_t *remaining)
 	return buf;
 }
 
-static struct net_buf *bt_open_amp_acl_recv(u8_t **data, size_t *remaining)
+static struct net_buf *bt_rpmsg_acl_recv(u8_t **data, size_t *remaining)
 {
 	struct bt_hci_acl_hdr hdr;
 	struct net_buf *buf;
@@ -319,24 +320,24 @@ static struct net_buf *bt_open_amp_acl_recv(u8_t **data, size_t *remaining)
 	return buf;
 }
 
-static void bt_open_amp_rx(u8_t *data, size_t len)
+static void bt_rpmsg_rx(u8_t *data, size_t len)
 {
 	u8_t pkt_indicator;
 	struct net_buf *buf = NULL;
 	size_t remaining = len;
 
-	BT_HEXDUMP_DBG(data, len, "Open AMP data:");
+	BT_HEXDUMP_DBG(data, len, "RPMsg data:");
 
 	pkt_indicator = *data++;
 	remaining -= sizeof(pkt_indicator);
 
 	switch (pkt_indicator) {
-	case OPEN_AMP_EVT:
-		buf = bt_open_amp_evt_recv(&data, &remaining);
+	case RPMSG_EVT:
+		buf = bt_rpmsg_evt_recv(&data, &remaining);
 		break;
 
-	case OPEN_AMP_ACL:
-		buf = bt_open_amp_acl_recv(&data, &remaining);
+	case RPMSG_ACL:
+		buf = bt_rpmsg_acl_recv(&data, &remaining);
 		break;
 
 	default:
@@ -359,7 +360,7 @@ static void bt_open_amp_rx(u8_t *data, size_t len)
 	}
 }
 
-static int bt_open_amp_send(struct net_buf *buf)
+static int bt_rpmsg_send(struct net_buf *buf)
 {
 	u8_t pkt_indicator;
 
@@ -367,10 +368,10 @@ static int bt_open_amp_send(struct net_buf *buf)
 
 	switch (bt_buf_get_type(buf)) {
 	case BT_BUF_ACL_OUT:
-		pkt_indicator = OPEN_AMP_ACL;
+		pkt_indicator = RPMSG_ACL;
 		break;
 	case BT_BUF_CMD:
-		pkt_indicator = OPEN_AMP_CMD;
+		pkt_indicator = RPMSG_CMD;
 		break;
 	default:
 		BT_ERR("Unknown type %u", bt_buf_get_type(buf));
@@ -386,13 +387,13 @@ done:
 	return 0;
 }
 
-static int bt_open_amp_open(void)
+static int bt_rpmsg_open(void)
 {
 	int err;
 
 	BT_DBG("");
 
-	err = bt_open_amp_init_internal();
+	err = bt_rpmsg_init_internal();
 	if (err) {
 		return err;
 	}
@@ -401,12 +402,12 @@ static int bt_open_amp_open(void)
 }
 
 static const struct bt_hci_driver drv = {
-	.name		= "OpenAMP",
-	.open		= bt_open_amp_open,
-	.send		= bt_open_amp_send,
+	.name		= "RPMsg",
+	.open		= bt_rpmsg_open,
+	.send		= bt_rpmsg_send,
 };
 
-static int bt_open_amp_init(struct device *unused)
+static int bt_rpmsg_init(struct device *unused)
 {
 	ARG_UNUSED(unused);
 
@@ -420,4 +421,4 @@ static int bt_open_amp_init(struct device *unused)
 	return 0;
 }
 
-SYS_INIT(bt_open_amp_init, POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT);
+SYS_INIT(bt_rpmsg_init, POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT);

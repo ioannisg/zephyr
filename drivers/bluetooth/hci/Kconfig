@@ -30,16 +30,18 @@ config BT_H5
 	  Bluetooth three-wire (H:5) UART driver. Implementation of HCI
 	  Three-Wire UART Transport Layer.
 
-config BT_NRF_OPEN_AMP
-	bool "Open AMP HCI"
+config BT_RPMSG
+	bool "RPMsg HCI"
 	select IPM
 	select IPM_NRFX
 	select NRFX_IPC
 	select IPM_MSG_CH_1_ENABLE
 	select IPM_MSG_CH_0_ENABLE
+	select IPM_MSG_CH_0_TX
+	select IPM_MSG_CH_1_RX
 	select OPENAMP
 	help
-	  Based on OpenAMP transport.
+	  Based on RPMsg transport.
 
 config BT_SPI
 	bool "SPI HCI"
