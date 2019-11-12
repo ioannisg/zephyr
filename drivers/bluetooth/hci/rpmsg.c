@@ -148,7 +148,7 @@ void ns_bind_cb(struct rpmsg_device *rdev, const char *name, u32_t dest)
 
 static int bt_rpmsg_init_internal(void)
 {
-	int status;
+	int err;
 	struct metal_init_params metal_params = METAL_INIT_DEFAULTS;
 
 	static struct virtio_vring_info     rvrings[2];
@@ -159,22 +159,22 @@ static int bt_rpmsg_init_internal(void)
 	static struct metal_device          *device;
 
 	/* Libmetal setup */
-	status = metal_init(&metal_params);
-	if (status != 0) {
-		BT_ERR("metal_init: failed - error code %d", status);
-		return status;
+	err = metal_init(&metal_params);
+	if (err) {
+		BT_ERR("metal_init: failed - error code %d", err);
+		return err;
 	}
 
-	status = metal_register_generic_device(&shm_device);
-	if (status != 0) {
-		BT_ERR("Couldn't register shared memory device: %d", status);
-		return status;
+	err = metal_register_generic_device(&shm_device);
+	if (err) {
+		BT_ERR("Couldn't register shared memory device: %d", err);
+		return err;
 	}
 
-	status = metal_device_open("generic", SHM_DEVICE_NAME, &device);
-	if (status != 0) {
-		BT_ERR("metal_device_open failed: %d", status);
-		return status;
+	err = metal_device_open("generic", SHM_DEVICE_NAME, &device);
+	if (err) {
+		BT_ERR("metal_device_open failed: %d", err);
+		return err;
 	}
 
 	io = metal_device_io_region(device, 0);
@@ -200,13 +200,13 @@ static int bt_rpmsg_init_internal(void)
 
 	/* Virtqueue setup */
 	vq[0] = virtqueue_allocate(VRING_SIZE);
-	if (vq[0] == NULL) {
+	if (!vq[0]) {
 		BT_ERR("virtqueue_allocate failed to alloc vq[0]");
 		return -ENOMEM;
 	}
 
 	vq[1] = virtqueue_allocate(VRING_SIZE);
-	if (vq[1] == NULL) {
+	if (!vq[1]) {
 		BT_ERR("virtqueue_allocate failed to alloc vq[1]");
 		return -ENOMEM;
 	}
@@ -229,10 +229,10 @@ static int bt_rpmsg_init_internal(void)
 	vdev.vrings_info = &rvrings[0];
 
 	rpmsg_virtio_init_shm_pool(&shpool, (void *)SHM_START_ADDR, SHM_SIZE);
-	status = rpmsg_init_vdev(&rvdev, &vdev, ns_bind_cb, io, &shpool);
-	if (status != 0) {
-		BT_ERR("rpmsg_init_vdev failed %d", status);
-		return status;
+	err = rpmsg_init_vdev(&rvdev, &vdev, ns_bind_cb, io, &shpool);
+	if (err) {
+		BT_ERR("rpmsg_init_vdev failed %d", err);
+		return err;
 	}
 
 	/* Since we are using name service, we need to wait for a response
@@ -256,24 +256,25 @@ static inline bool bt_buf_get_prio(struct net_buf *buf)
 	return (bool)(*((u8_t *)net_buf_user_data(buf) + 1));
 }
 
-static struct net_buf *bt_rpmsg_evt_recv(u8_t **data, size_t *remaining)
+static struct net_buf *bt_rpmsg_evt_recv(u8_t *data, size_t remaining)
 {
 	struct bt_hci_evt_hdr hdr;
 	struct net_buf *buf;
 
-	if (*remaining < sizeof(hdr)) {
+	if (remaining < sizeof(hdr)) {
 		BT_ERR("Not enought data for event header");
 		return NULL;
 	}
 
-	memcpy((void *)&hdr, *data, sizeof(hdr));
-	*data += sizeof(hdr);
-	*remaining -= sizeof(hdr);
+	memcpy((void *)&hdr, data, sizeof(hdr));
+	data += sizeof(hdr);
+	remaining -= sizeof(hdr);
 
-	if (*remaining != hdr.len) {
+	if (remaining != hdr.len) {
 		BT_ERR("Event payload length is not correct");
+		return NULL;
 	}
-	*remaining = hdr.len;
+	remaining = hdr.len;
 	BT_DBG("len %u", hdr.len);
 
 	buf = bt_buf_get_evt(hdr.evt, false, K_NO_WAIT);
@@ -285,24 +286,26 @@ static struct net_buf *bt_rpmsg_evt_recv(u8_t **data, size_t *remaining)
 	net_buf_add_mem(buf, &hdr, sizeof(hdr));
 	bt_buf_set_prio(buf, bt_hci_evt_is_prio(hdr.evt));
 
+	net_buf_add_mem(buf, data, remaining);
+
 	return buf;
 }
 
-static struct net_buf *bt_rpmsg_acl_recv(u8_t **data, size_t *remaining)
+static struct net_buf *bt_rpmsg_acl_recv(u8_t *data, size_t remaining)
 {
 	struct bt_hci_acl_hdr hdr;
 	struct net_buf *buf;
 
-	if (*remaining < sizeof(hdr)) {
+	if (remaining < sizeof(hdr)) {
 		BT_ERR("Not enought data for ACL header");
 		return NULL;
 	}
 
 	buf = bt_buf_get_rx(BT_BUF_ACL_IN, K_NO_WAIT);
 	if (buf) {
-		memcpy((void *)&hdr, *data, sizeof(hdr));
-		*data += sizeof(hdr);
-		*remaining -= sizeof(hdr);
+		memcpy((void *)&hdr, data, sizeof(hdr));
+		data += sizeof(hdr);
+		remaining -= sizeof(hdr);
 
 		net_buf_add_mem(buf, &hdr, sizeof(hdr));
 		bt_buf_set_prio(buf, false);
@@ -310,12 +313,14 @@ static struct net_buf *bt_rpmsg_acl_recv(u8_t **data, size_t *remaining)
 		BT_ERR("No available ACL buffers!");
 	}
 
-	if (*remaining != hdr.len) {
+	if (remaining != hdr.len) {
 		BT_ERR("ACL payload length is not correct");
+		return NULL;
 	}
-	*remaining = sys_le16_to_cpu(hdr.len);
+	remaining = sys_le16_to_cpu(hdr.len);
 
-	BT_DBG("len %u", *remaining);
+	BT_DBG("len %u", remaining);
+	net_buf_add_mem(buf, data, remaining);
 
 	return buf;
 }
@@ -333,11 +338,11 @@ static void bt_rpmsg_rx(u8_t *data, size_t len)
 
 	switch (pkt_indicator) {
 	case RPMSG_EVT:
-		buf = bt_rpmsg_evt_recv(&data, &remaining);
+		buf = bt_rpmsg_evt_recv(data, remaining);
 		break;
 
 	case RPMSG_ACL:
-		buf = bt_rpmsg_acl_recv(&data, &remaining);
+		buf = bt_rpmsg_acl_recv(data, remaining);
 		break;
 
 	default:
@@ -346,9 +351,6 @@ static void bt_rpmsg_rx(u8_t *data, size_t len)
 	}
 
 	if (buf) {
-		BT_DBG("Remaining: %d", remaining);
-		net_buf_add_mem(buf, data, remaining);
-
 		BT_DBG("Calling bt_recv(%p)", buf);
 		if (bt_buf_get_prio(buf)) {
 			bt_recv_prio(buf);
