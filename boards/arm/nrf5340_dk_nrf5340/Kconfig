@@ -6,11 +6,11 @@
 if BOARD_NRF5340_DK_NRF5340_CPUAPP || BOARD_NRF5340_DK_NRF5340_CPUAPPNS
 
 choice BT_HCI_BUS_TYPE
-	default BT_NRF_OPEN_AMP if BT
+	default BT_RPMSG if BT
 endchoice
 
 config HEAP_MEM_POOL_SIZE
-	default 8192 if BT_NRF_OPEN_AMP
+	default 8192 if BT_RPMSG
 
 config BT_HAS_HCI_VS
 	default y if BT
