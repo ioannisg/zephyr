@@ -151,12 +151,12 @@ static K_FIFO_DEFINE(tx_queue);
 #define HCI_RPMSG_SCO 0x03
 #define HCI_RPMSG_EVT 0x04
 
-static struct net_buf *hci_rpmsg_cmd_recv(u8_t **data, size_t *remaining)
+static struct net_buf *hci_rpmsg_cmd_recv(u8_t *data, size_t remaining)
 {
 	struct bt_hci_cmd_hdr hdr;
 	struct net_buf *buf;
 
-	if (*remaining < sizeof(hdr)) {
+	if (remaining < sizeof(hdr)) {
 		LOG_ERR("Not enought data for command header");
 		return NULL;
 	}
@@ -165,31 +165,32 @@ static struct net_buf *hci_rpmsg_cmd_recv(u8_t **data, size_t *remaining)
 	if (buf) {
 		bt_buf_set_type(buf, BT_BUF_CMD);
 
-		memcpy((void *)&hdr, *data, sizeof(hdr));
-		*data += sizeof(hdr);
-		*remaining -= sizeof(hdr);
+		memcpy((void *)&hdr, data, sizeof(hdr));
+		data += sizeof(hdr);
+		remaining -= sizeof(hdr);
 
 		net_buf_add_mem(buf, &hdr, sizeof(hdr));
 	} else {
 		LOG_ERR("No available command buffers!");
 	}
 
-	if (*remaining != hdr.param_len) {
+	if (remaining != hdr.param_len) {
 		LOG_ERR("Command payload length is not correct");
 	}
-	*remaining = hdr.param_len;
+	remaining = hdr.param_len;
 
 	LOG_DBG("len %u", hdr.param_len);
+	net_buf_add_mem(buf, data, remaining);
 
 	return buf;
 }
 
-static struct net_buf *hci_rpmsg_acl_recv(u8_t **data, size_t *remaining)
+static struct net_buf *hci_rpmsg_acl_recv(u8_t *data, size_t remaining)
 {
 	struct bt_hci_acl_hdr hdr;
 	struct net_buf *buf;
 
-	if (*remaining < sizeof(hdr)) {
+	if (remaining < sizeof(hdr)) {
 		LOG_ERR("Not enought data for ACL header");
 		return NULL;
 	}
@@ -198,18 +199,19 @@ static struct net_buf *hci_rpmsg_acl_recv(u8_t **data, size_t *remaining)
 	if (buf) {
 		bt_buf_set_type(buf, BT_BUF_ACL_OUT);
 
-		memcpy((void *)&hdr, *data, sizeof(hdr));
-		*data += sizeof(hdr);
-		*remaining -= sizeof(hdr);
+		memcpy((void *)&hdr, data, sizeof(hdr));
+		data += sizeof(hdr);
+		remaining -= sizeof(hdr);
 
 		net_buf_add_mem(buf, &hdr, sizeof(hdr));
 	} else {
 		LOG_ERR("No available ACL buffers!");
 	}
 
-	*remaining = sys_le16_to_cpu(hdr.len);
+	remaining = sys_le16_to_cpu(hdr.len);
 
-	LOG_DBG("len %u", *remaining);
+	LOG_DBG("len %u", remaining);
+	net_buf_add_mem(buf, data, remaining);
 
 	return buf;
 }
@@ -227,11 +229,11 @@ static void hci_rpmsg_rx(u8_t *data, size_t len)
 
 	switch (pkt_indicator) {
 	case HCI_RPMSG_CMD:
-		buf = hci_rpmsg_cmd_recv(&data, &remaining);
+		buf = hci_rpmsg_cmd_recv(data, remaining);
 		break;
 
 	case HCI_RPMSG_ACL:
-		buf = hci_rpmsg_acl_recv(&data, &remaining);
+		buf = hci_rpmsg_acl_recv(data, remaining);
 		break;
 
 	default:
@@ -240,7 +242,6 @@ static void hci_rpmsg_rx(u8_t *data, size_t len)
 	}
 
 	if (buf) {
-		net_buf_add_mem(buf, data, remaining);
 		net_buf_put(&tx_queue, buf);
 
 		LOG_HEXDUMP_DBG(buf->data, buf->len, "Final net buffer:");
@@ -318,7 +319,7 @@ int endpoint_cb(struct rpmsg_endpoint *ept, void *data, size_t len, u32_t src,
 
 static int hci_rpmsg_init(void)
 {
-	int status;
+	int err;
 	struct metal_init_params metal_params = METAL_INIT_DEFAULTS;
 
 	static struct virtio_vring_info   rvrings[2];
@@ -329,28 +330,28 @@ static int hci_rpmsg_init(void)
 	static struct metal_device        *device;
 
 	/* Libmetal setup */
-	status = metal_init(&metal_params);
-	if (status != 0) {
-		LOG_ERR("metal_init: failed - error code %d", status);
-		return status;
+	err = metal_init(&metal_params);
+	if (err) {
+		LOG_ERR("metal_init: failed - error code %d", err);
+		return err;
 	}
 
-	status = metal_register_generic_device(&shm_device);
-	if (status != 0) {
-		LOG_ERR("Couldn't register shared memory device: %d", status);
-		return status;
+	err = metal_register_generic_device(&shm_device);
+	if (err) {
+		LOG_ERR("Couldn't register shared memory device: %d", err);
+		return err;
 	}
 
-	status = metal_device_open("generic", SHM_DEVICE_NAME, &device);
-	if (status != 0) {
-		LOG_ERR("metal_device_open failed: %d", status);
-		return status;
+	err = metal_device_open("generic", SHM_DEVICE_NAME, &device);
+	if (err) {
+		LOG_ERR("metal_device_open failed: %d", err);
+		return err;
 	}
 
 	io = metal_device_io_region(device, 0);
-	if (io == NULL) {
+	if (!io) {
 		LOG_ERR("metal_device_io_region failed to get region");
-		return status;
+		return -ENODEV;
 	}
 
 	/* IPM setup */
@@ -369,15 +370,15 @@ static int hci_rpmsg_init(void)
 	ipm_register_callback(ipm_rx_handle, ipm_callback, NULL);
 
 	vq[0] = virtqueue_allocate(VRING_SIZE);
-	if (vq[0] == NULL) {
+	if (!vq[0]) {
 		LOG_ERR("virtqueue_allocate failed to alloc vq[0]");
-		return status;
+		return -ENOMEM;
 	}
 
 	vq[1] = virtqueue_allocate(VRING_SIZE);
-	if (vq[1] == NULL) {
+	if (!vq[1]) {
 		LOG_ERR("virtqueue_allocate failed to alloc vq[1]");
-		return status;
+		return -ENOMEM;
 	}
 
 	rvrings[0].io = io;
@@ -398,35 +399,35 @@ static int hci_rpmsg_init(void)
 	vdev.vrings_info = &rvrings[0];
 
 	/* setup rvdev */
-	status = rpmsg_init_vdev(&rvdev, &vdev, NULL, io, NULL);
-	if (status != 0) {
-		LOG_ERR("rpmsg_init_vdev failed %d", status);
-		return status;
+	err = rpmsg_init_vdev(&rvdev, &vdev, NULL, io, NULL);
+	if (err) {
+		LOG_ERR("rpmsg_init_vdev failed %d", err);
+		return err;
 	}
 
 	rdev = rpmsg_virtio_get_rpmsg_device(&rvdev);
 
-	status = rpmsg_create_ept(&ep, rdev, "k", RPMSG_ADDR_ANY,
+	err = rpmsg_create_ept(&ep, rdev, "k", RPMSG_ADDR_ANY,
 				  RPMSG_ADDR_ANY, endpoint_cb,
 				  rpmsg_service_unbind);
-	if (status != 0) {
-		LOG_ERR("rpmsg_create_ept failed %d", status);
-		return status;
+	if (err) {
+		LOG_ERR("rpmsg_create_ept failed %d", err);
+		return err;
 	}
 
-	return status;
+	return err;
 }
 
 void main(void)
 {
-	int status;
+	int err;
 
 	/* incoming events and data from the controller */
 	static K_FIFO_DEFINE(rx_queue);
 
 	/* initialize RPMSG */
-	status = hci_rpmsg_init();
-	if (status != 0) {
+	err = hci_rpmsg_init();
+	if (err != 0) {
 		return;
 	}
 
@@ -446,8 +447,8 @@ void main(void)
 		struct net_buf *buf;
 
 		buf = net_buf_get(&rx_queue, K_FOREVER);
-		status = hci_rpmsg_send(buf);
-		if (status) {
+		err = hci_rpmsg_send(buf);
+		if (err) {
 			LOG_ERR("Failed to send");
 		}
 	}
