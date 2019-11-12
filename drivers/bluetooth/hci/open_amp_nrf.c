@@ -28,11 +28,6 @@
 
 static void bt_open_amp_rx(u8_t *data, size_t len);
 
-static K_THREAD_STACK_DEFINE(rx_thread_stack, CONFIG_BT_RX_STACK_SIZE);
-static struct k_thread rx_thread_data;
-
-static K_FIFO_DEFINE(rx_queue);
-
 static K_SEM_DEFINE(sync_sem, 0, 1);
 
 static struct device *ipm_tx_handle;
@@ -51,11 +46,6 @@ static struct device *ipm_rx_handle;
 #define VRING_SIZE          16
 
 #define VDEV_STATUS_ADDR    0x20010000
-
-/* Channel used for Application MCU to notify Network MCU */
-#define IPC_TX_CHANNEL      0
-/* Channel used for Network MCU to notify Application MCU */
-#define IPC_RX_CHANNEL      1
 
 /* End of configuration defines */
 
@@ -264,37 +254,6 @@ static inline bool bt_buf_get_prio(struct net_buf *buf)
 	return (bool)(*((u8_t *)net_buf_user_data(buf) + 1));
 }
 
-static void rx_thread(void *p1, void *p2, void *p3)
-{
-	struct net_buf *buf;
-
-	ARG_UNUSED(p1);
-	ARG_UNUSED(p2);
-	ARG_UNUSED(p3);
-
-	BT_DBG("Rx thread started");
-
-	while (1) {
-		buf = net_buf_get(&rx_queue, K_FOREVER);
-		do {
-			BT_DBG("Calling bt_recv(%p)", buf);
-			if (bt_buf_get_prio(buf)) {
-				bt_recv_prio(buf);
-			} else {
-				bt_recv(buf);
-			}
-
-			/* Give other threads a chance to run if the ISR
-			 * is receiving data so fast that rx.fifo never
-			 * or very rarely goes empty.
-			 */
-			k_yield();
-
-			buf = net_buf_get(&rx_queue, K_NO_WAIT);
-		} while (buf);
-	}
-}
-
 static struct net_buf *bt_open_amp_evt_recv(u8_t **data, size_t *remaining)
 {
 	struct bt_hci_evt_hdr hdr;
@@ -388,7 +347,13 @@ static void bt_open_amp_rx(u8_t *data, size_t len)
 	if (buf) {
 		BT_DBG("Remaining: %d", remaining);
 		net_buf_add_mem(buf, data, remaining);
-		net_buf_put(&rx_queue, buf);
+
+		BT_DBG("Calling bt_recv(%p)", buf);
+		if (bt_buf_get_prio(buf)) {
+			bt_recv_prio(buf);
+		} else {
+			bt_recv(buf);
+		}
 
 		BT_HEXDUMP_DBG(buf->data, buf->len, "RX buf payload:");
 	}
@@ -431,12 +396,6 @@ static int bt_open_amp_open(void)
 	if (err) {
 		return err;
 	}
-
-	k_thread_create(&rx_thread_data, rx_thread_stack,
-			K_THREAD_STACK_SIZEOF(rx_thread_stack),
-			rx_thread, NULL, NULL, NULL,
-			K_PRIO_COOP(CONFIG_BT_RX_PRIO),
-			0, K_NO_WAIT);
 
 	return 0;
 }
