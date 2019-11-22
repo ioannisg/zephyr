@@ -105,7 +105,9 @@ static u32_t elapsed(void)
 		overflow_cyc += (wrap != 0) ? last_load : 0;
 	}
 
-	return (last_load - val) + overflow_cyc;
+	u32_t ret = (last_load - val) + overflow_cyc;
+	overflow_cyc = 0;
+	return ret;
 }
 
 /* Callout out of platform assembly, not hooked via IRQ_CONNECT... */
@@ -115,13 +117,11 @@ void z_clock_isr(void *arg)
 	u32_t dticks;
 
 	/* Update overflow_cyc and clear COUNTFLAG by invoking elapsed() */
-	elapsed();
+	cycle_count += elapsed();
 
 	/* Increment the amount of HW cycles elapsed (complete counter
 	 * cycles) and announce the progress to the kernel.
 	 */
-	cycle_count += overflow_cyc;
-	overflow_cyc = 0;
 
 	if (TICKLESS) {
 		/* In TICKLESS mode, the SysTick.LOAD is re-programmed
@@ -177,14 +177,9 @@ void z_clock_set_timeout(s32_t ticks, bool idle)
 
 	ticks = MIN(MAX_TICKS, MAX(ticks - 1, 0));
 
-	/* Desired delay in the future */
-	delay = (ticks == 0) ? MIN_DELAY : ticks * CYC_PER_TICK;
-
 	k_spinlock_key_t key = k_spin_lock(&lock);
 
-	u32_t pending = elapsed();
-
-	cycle_count += pending;
+	cycle_count += elapsed();
 
 	u32_t unannounced = cycle_count - announced_cycles;
 
@@ -197,12 +192,13 @@ void z_clock_set_timeout(s32_t ticks, bool idle)
 		last_load = 2;
 	} else {
 		/* Round delay up to next tick boundary */
-		delay += unannounced;
+		delay = unannounced;
 		delay =
 		 ((delay + CYC_PER_TICK - 1) / CYC_PER_TICK) * CYC_PER_TICK;
-		last_load = delay - unannounced;
 
-		overflow_cyc = 0U;
+		delay = MAX(delay, MIN_DELAY);
+
+		last_load = delay - announced_cycles;
 	}
 	SysTick->LOAD = last_load - 1;
 	SysTick->VAL = 0; /* resets timer to last_load */
@@ -218,7 +214,8 @@ u32_t z_clock_elapsed(void)
 	}
 
 	k_spinlock_key_t key = k_spin_lock(&lock);
-	u32_t cyc = elapsed() + cycle_count - announced_cycles;
+	cycle_count += elapsed();
+	u32_t cyc = cycle_count - announced_cycles;
 
 	k_spin_unlock(&lock, key);
 	return cyc / CYC_PER_TICK;
@@ -227,7 +224,8 @@ u32_t z_clock_elapsed(void)
 u32_t z_timer_cycle_get_32(void)
 {
 	k_spinlock_key_t key = k_spin_lock(&lock);
-	u32_t ret = elapsed() + cycle_count;
+	cycle_count += elapsed();
+	u32_t ret = cycle_count;
 
 	k_spin_unlock(&lock, key);
 	return ret;
