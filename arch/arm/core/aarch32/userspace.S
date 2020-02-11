@@ -147,12 +147,6 @@ SECTION_FUNC(TEXT,z_arm_userspace_enter)
     /* r0 contains user stack start, ip contains user stack size */
     add r0, r0, ip   /* calculate top of stack */
 
-#if defined(CONFIG_BUILTIN_STACK_GUARD)
-    /* clear stack limit (stack protection not required in user mode) */
-    mov r3, #0
-    msr PSPLIM, r3
-#endif
-
     /* pop remaining arguments from stack before switching stacks */
 #if defined(CONFIG_ARMV6_M_ARMV8_M_BASELINE)
     /* Use r4 to pop lr, then restore r4 */
@@ -167,6 +161,17 @@ SECTION_FUNC(TEXT,z_arm_userspace_enter)
     /* set stack to user stack */
     msr PSP, r0
 
+#if defined(CONFIG_BUILTIN_STACK_GUARD)
+    /* Set PSPLIM to guard the user stack area.
+     * Strictly speaking, guarding the user stack is not required in user
+     * mode; it only makes sense to do this until the thread has completed
+     * the entry to user space.
+     */
+    ldr r0, =_kernel
+    ldr r0, [r0, #_kernel_offset_to_current]
+    ldr r0, [r0, #_thread_offset_to_stack_info_start]
+    msr PSPLIM, r0
+#endif
     /* restore r0 */
     mov r0, lr
 
@@ -388,12 +393,6 @@ dispatch_syscall:
 
     /* restore LR */
     ldr lr, [sp,#12]
-#endif
-
-#if defined(CONFIG_BUILTIN_STACK_GUARD)
-    /* clear stack limit (stack protection not required in user mode) */
-    mov r3, #0
-    msr PSPLIM, r3
 #endif
 
 #if defined(CONFIG_ARMV6_M_ARMV8_M_BASELINE)
