@@ -254,20 +254,19 @@ SECTION_FUNC(TEXT,z_arm_userspace_enter)
  */
 SECTION_FUNC(TEXT, z_arm_do_syscall)
 
-    /* The function is executing in privileged mode. This implies that we
+    /* Note (applies when using MPU-based stack overflow protection):
+     * The function is executing in privileged mode. This implies that we
      * shall not be allowed to use the thread's default unprivileged stack,
      * (i.e push to or pop from it), to avoid a possible stack corruption.
      *
-     * Rationale: since we execute in PRIV mode and no MPU guard or PSPLIM
-     * register is guarding the end of the default stack, we won't be able
+     * Rationale: since we execute in PRIV mode and no MPU guard
+     * is guarding the end of the default stack, we won't be able
      * to detect any stack overflows.
+     *
+     * If using built-in stack prtection (based on stack limit checking),
+     * at this point PSPLIM still guards the default stack, until the
+     * thread switches to the privileged stack to execute the system call.
      */
-
-#if defined(CONFIG_BUILTIN_STACK_GUARD)
-    /* clear stack pointer limit before setting the PSP */
-    mov ip, #0
-    msr PSPLIM, ip
-#endif
 
 #if defined(CONFIG_ARMV6_M_ARMV8_M_BASELINE)
     /* save current stack pointer (user stack) */
