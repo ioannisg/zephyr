@@ -409,6 +409,14 @@ dispatch_syscall:
     msr PSP, ip
 #endif
 
+#if defined(CONFIG_BUILTIN_STACK_GUARD)
+    /* temporarily guard the default stack until thread drops privileges */
+    ldr r3, =_kernel
+    ldr r3, [r3, #_kernel_offset_to_current]
+    ldr r3, [r3, #_thread_offset_to_stack_info_start]    /* stack_info.start */
+    msr PSPLIM, r3
+#endif
+
     push {r0, r1}
 #if defined(CONFIG_ARMV6_M_ARMV8_M_BASELINE)
     push {r2, r3}
