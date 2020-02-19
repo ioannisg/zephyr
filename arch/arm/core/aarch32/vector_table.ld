@@ -3,6 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+ 
 
 _vector_start = .;
 KEEP(*(.exc_vector_table))
