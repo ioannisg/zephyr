@@ -50,7 +50,7 @@ static void event_clear(void)
 
 static void event_enable(void)
 {
-	nrf_rtc_event_enable(RTC, NRF_RTC_INT_COMPARE0_MASK);
+	nrf_rtc_event_enable(RTC, NRF_RTC_EVENT_COMPARE_0);
 }
 
 static void int_disable(void)
