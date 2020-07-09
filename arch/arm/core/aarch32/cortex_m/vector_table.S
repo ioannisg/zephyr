@@ -83,4 +83,3 @@ SECTION_SUBSEC_FUNC(exc_vector_table,_vector_table_section,_vector_table)
 #else
     .word 0
 #endif /* CONFIG_CPU_CORTEX_M_HAS_SYSTICK */
-
