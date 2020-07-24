@@ -89,7 +89,8 @@ manifest:
       path: modules/crypto/mbedtls
       revision: 4bf099f1254332d16dcd931ccea0a88d24a7d3c7
     - name: mcuboot
-      revision: 813d29ca7ce2aeb388d945f7889e6711b97c33c7
+      url: https://github.com/carlescufi/mcuboot.git
+      revision: no-multithreading-tests
       path: bootloader/mcuboot
     - name: mcumgr
       revision: cfe5eb98a9493017448846fd1a44a9340bd0a22f

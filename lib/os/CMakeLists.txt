@@ -8,7 +8,6 @@ zephyr_sources(
   crc8_sw.c
   crc7_sw.c
   dec.c
-  fdtable.c
   hex.c
   mempool.c
   notify.c
@@ -22,6 +21,8 @@ zephyr_sources(
   heap.c
   heap-validate.c
   )
+
+zephyr_sources_ifdef(CONFIG_FDTABLE fdtable.c)
 
 zephyr_sources_ifdef(CONFIG_JSON_LIBRARY json.c)
 

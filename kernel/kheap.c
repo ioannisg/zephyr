@@ -9,6 +9,7 @@
 #include <wait_q.h>
 #include <init.h>
 
+#if defined(CONFIG_KERNEL_HEAP)
 void k_heap_init(struct k_heap *h, void *mem, size_t bytes)
 {
 	z_waitq_init(&h->wait_q);
@@ -25,6 +26,7 @@ static int statics_init(struct device *unused)
 }
 
 SYS_INIT(statics_init, PRE_KERNEL_1, CONFIG_KERNEL_INIT_PRIORITY_OBJECTS);
+#endif
 
 void *k_heap_alloc(struct k_heap *h, size_t bytes, k_timeout_t timeout)
 {

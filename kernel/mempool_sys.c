@@ -25,6 +25,7 @@ static int pool_id(struct k_mem_pool *pool)
 	return pool - &_k_mem_pool_list_start[0];
 }
 
+#if defined(CONFIG_KERNEL_MEM_POOL)
 static void k_mem_pool_init(struct k_mem_pool *p)
 {
 	z_waitq_init(&p->wait_q);
@@ -43,6 +44,7 @@ int init_static_pools(struct device *unused)
 }
 
 SYS_INIT(init_static_pools, PRE_KERNEL_1, CONFIG_KERNEL_INIT_PRIORITY_OBJECTS);
+#endif
 
 int k_mem_pool_alloc(struct k_mem_pool *p, struct k_mem_block *block,
 		     size_t size, k_timeout_t timeout)
