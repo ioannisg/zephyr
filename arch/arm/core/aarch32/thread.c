@@ -39,6 +39,7 @@ extern K_THREAD_STACK_DEFINE(z_main_stack, CONFIG_MAIN_STACK_SIZE);
  * addresses, we have to unset it manually before storing it in the 'pc' field
  * of the ESF.
  */
+#if defined(CONFIG_MULTITHREADING)
 void arch_new_thread(struct k_thread *thread, k_thread_stack_t *stack,
 		     char *stack_ptr, k_thread_entry_t entry,
 		     void *p1, void *p2, void *p3)
@@ -112,6 +113,7 @@ void arch_new_thread(struct k_thread *thread, k_thread_stack_t *stack,
 	 * irrelevant.
 	 */
 }
+#endif /* CONFIG_MULTITHREADING */
 
 #ifdef CONFIG_USERSPACE
 FUNC_NORETURN void arch_user_mode_enter(k_thread_entry_t user_entry,

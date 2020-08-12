@@ -12,6 +12,7 @@ extern void read_timer_start_of_swap(void);
 #endif
 extern const int _k_neg_eagain;
 
+#if defined(CONFIG_MULTITHREADING)
 /* The 'key' actually represents the BASEPRI register
  * prior to disabling interrupts via the BASEPRI mechanism.
  *
@@ -59,3 +60,4 @@ int arch_swap(unsigned int key)
 	 */
 	return _current->arch.swap_return_value;
 }
+#endif

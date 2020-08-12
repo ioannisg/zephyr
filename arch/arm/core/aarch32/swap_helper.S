@@ -48,6 +48,7 @@ GDATA(_kernel)
  * function is directly called either by _IntExit in case of preemption, or
  * z_arm_svc in case of cooperative switching.
  */
+ #if defined(CONFIG_MULTITHREADING)
 
 SECTION_FUNC(TEXT, z_arm_pendsv)
 
@@ -366,6 +367,8 @@ _thread_irq_disabled:
      * Cortex-R: return to the caller (_IntExit or z_arm_svc)
      */
     bx lr
+
+#endif
 
 #if defined(CONFIG_ARMV6_M_ARMV8_M_BASELINE) || \
   defined(CONFIG_ARMV7_M_ARMV8_M_MAINLINE)

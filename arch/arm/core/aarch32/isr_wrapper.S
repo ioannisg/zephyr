@@ -108,6 +108,7 @@ SECTION_FUNC(TEXT, _isr_wrapper)
 	cpsid i  /* PRIMASK = 1 */
 #endif
 
+#if defined(CONFIG_MULTITHREADING)
 	/* is this a wakeup from idle ? */
 	ldr r2, =_kernel
 	/* requested idle duration, in ticks */
@@ -138,6 +139,8 @@ _idle_state_cleared:
 #else
 #error Unknown ARM architecture
 #endif /* CONFIG_ARMV6_M_ARMV8_M_BASELINE */
+
+#endif /* CONFIG_MULTITHREADING */
 
 #if defined(CONFIG_CPU_CORTEX_M)
 	cpsie i		/* re-enable interrupts (PRIMASK = 0) */

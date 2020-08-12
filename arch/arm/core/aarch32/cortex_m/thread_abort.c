@@ -28,6 +28,7 @@ extern void z_thread_single_abort(struct k_thread *thread);
 
 void z_impl_k_thread_abort(k_tid_t thread)
 {
+#if defined(CONFIG_MULTITHREADING)
 	unsigned int key;
 
 	key = irq_lock();
@@ -49,4 +50,5 @@ void z_impl_k_thread_abort(k_tid_t thread)
 
 	/* The abort handler might have altered the ready queue. */
 	z_reschedule_irqlock(key);
+#endif
 }

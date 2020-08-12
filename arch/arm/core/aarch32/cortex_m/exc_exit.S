@@ -68,6 +68,7 @@ SECTION_SUBSEC_FUNC(TEXT, _HandlerModeExit, z_arm_int_exit)
 
 SECTION_SUBSEC_FUNC(TEXT, _HandlerModeExit, z_arm_exc_exit)
 
+#if defined(CONFIG_MULTITHREADING)
 #ifdef CONFIG_PREEMPT_ENABLED
 	ldr r3, =_kernel
 
@@ -85,6 +86,7 @@ _ExcExitWithGdbStub:
 
 _EXIT_EXC:
 #endif /* CONFIG_PREEMPT_ENABLED */
+#endif
 
 #ifdef CONFIG_STACK_SENTINEL
 	push {r0, lr}
