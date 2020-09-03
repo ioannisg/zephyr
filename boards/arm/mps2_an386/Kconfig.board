@@ -1,0 +1,7 @@
+# Copyright (c) 2020 Linaro Limited
+# SPDX-License-Identifier: Apache-2.0
+
+config BOARD_MPS2_AN386
+	bool "ARM Cortex-M4 SMM on V2M-MPS2 (Application Note AN386)"
+	depends on SOC_MPS2_AN386
+	select HAS_COVERAGE_SUPPORT
