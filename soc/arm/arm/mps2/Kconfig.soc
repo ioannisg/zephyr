@@ -10,6 +10,12 @@ config SOC_MPS2_AN385
 	select CPU_CORTEX_M3
 	select CPU_HAS_ARM_MPU
 
+config SOC_MPS2_AN386
+	bool "ARM Cortex-M4 SMM on V2M-MPS2 (Application Note AN386)"
+	select CPU_CORTEX_M4
+	select CPU_HAS_FPU
+	select CPU_HAS_ARM_MPU
+
 config SOC_MPS2_AN521
 	bool "ARM Cortex-M33 SMM-SSE-200 on V2M-MPS2+ (AN521)"
 	select CPU_CORTEX_M33

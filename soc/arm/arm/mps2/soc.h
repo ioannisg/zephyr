@@ -9,6 +9,11 @@
 
 #define __MPU_PRESENT 1
 
+#if defined(CONFIG_SOC_MPS2_AN386)
+#define __FPU_PRESENT             CONFIG_CPU_HAS_FPU
+#endif
+
+
 #if defined(CONFIG_SOC_MPS2_AN521)
 #define __SAUREGION_PRESENT       1U        /* SAU regions present */
 #define __FPU_PRESENT             CONFIG_CPU_HAS_FPU
