@@ -3,5 +3,6 @@ common:
   tags: arm interrupt
 tests:
   arch.arm.irq_advanced_features:
+    filter: not CONFIG_TRUSTED_EXECUTION_NONSECURE
   arch.arm.irq_advanced_features.secure_fw:
     filter: CONFIG_TRUSTED_EXECUTION_SECURE

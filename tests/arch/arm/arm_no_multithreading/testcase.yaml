@@ -3,4 +3,5 @@ common:
   tags: arm
 tests:
   arch.arm.no_multithreading:
+    filter: not CONFIG_TRUSTED_EXECUTION_NONSECURE
     platform_exclude: degu_evk
