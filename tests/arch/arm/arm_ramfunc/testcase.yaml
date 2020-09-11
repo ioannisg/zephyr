@@ -2,4 +2,3 @@ tests:
   arch.arm.ramfunc:
     filter: CONFIG_ARCH_HAS_RAMFUNC_SUPPORT
     tags: arm userspace
-    arch_allow: arm
