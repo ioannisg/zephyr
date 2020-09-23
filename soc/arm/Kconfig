@@ -3,6 +3,11 @@
 # Copyright (c) 2018 Nordic Semiconductor ASA.
 # SPDX-License-Identifier: Apache-2.0
 
+# The DWT on LPC54XXX does not have a cycle counter and cannot be utilized
+# for timing functions.
+config ARCH_HAS_TIMING_FUNCTIONS
+	default n if SOC_SERIES_LPC54XXX
+
 config CPU_HAS_ARM_MPU
 	bool
 	select CPU_HAS_MPU
