@@ -17,8 +17,7 @@ endif()
 trusted_firmware_build(BINARY_DIR ${CMAKE_BINARY_DIR}/tfm
                        BOARD ${TFM_TARGET_PLATFORM}
                        IPC
-                       CFGFILE "ConfigRegressionIPC"
-                       OUT_VENEERS_FILE VENEERS_FILE
+                       REGRESSION
                        ${TFM_BL2_ARGUMENT}
 )
 
