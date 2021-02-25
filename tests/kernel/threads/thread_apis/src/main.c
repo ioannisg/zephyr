@@ -18,6 +18,7 @@
 #include <kernel.h>
 #include <kernel_internal.h>
 #include <string.h>
+#include <linker/linker-defs.h>
 
 extern void test_threads_spawn_params(void);
 extern void test_threads_spawn_priority(void);
@@ -167,7 +168,7 @@ void test_thread_name_user_get_set(void)
 	char too_small[2];
 
 	/* Some memory-related error cases for k_thread_name_set() */
-	ret = k_thread_name_set(NULL, (const char *)0xFFFFFFF0);
+	ret = k_thread_name_set(NULL, (const char *)_image_rom_start);
 	zassert_equal(ret, -EFAULT, "accepted nonsense string (%d)", ret);
 	ret = k_thread_name_set(NULL, unreadable_string);
 	zassert_equal(ret, -EFAULT, "accepted unreadable string");
