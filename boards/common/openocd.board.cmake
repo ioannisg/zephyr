@@ -16,7 +16,13 @@ endif()
 set(OPENOCD_CMD_LOAD_DEFAULT "${OPENOCD_FLASH}")
 set(OPENOCD_CMD_VERIFY_DEFAULT "verify_image")
 
+# Cortex-M-specific halt debug enable bit clearing
+if(CONFIG_CPU_CORTEX_M)
+set(OPENOCD_CMD_HALT_DEBUG_EN_CLEAR "mww 0xE000EDF0 0xA05F0000")
+endif()
+
 board_finalize_runner_args(openocd
   --cmd-load "${OPENOCD_CMD_LOAD_DEFAULT}"
   --cmd-verify "${OPENOCD_CMD_VERIFY_DEFAULT}"
+  --cmd-halt-debug-en-clear "${OPENOCD_CMD_HALT_DEBUG_EN_CLEAR}"
   )
